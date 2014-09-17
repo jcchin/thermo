@@ -66,11 +66,11 @@ class CEAFS():    #trigger action on Mach
         muj= zeros(num_react)           
         sj= [[0 for x in xrange(5)] for x in xrange(5)] 
 
-        sum_nj_hj = 0.
-        sum_nj_hj_h = 0.
-        sum_nj_muj = 0.
-        sum_muj_nj_hj = 0.
-        sum_aij_nj= [[0 for x in xrange(5)] for x in xrange(5)] 
+        # sum_nj_hj = 0.
+        # sum_nj_hj_h = 0.
+        # sum_nj_muj = 0.
+        # sum_muj_nj_hj = 0.
+        # sum_aij_nj= [[0 for x in xrange(5)] for x in xrange(5)] 
 
         chmatrix= [[0 for x in xrange(3)] for x in xrange(3)]
         b = np.zeros(num_element + 1)
