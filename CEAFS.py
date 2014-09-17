@@ -110,7 +110,8 @@ class CEAFS():    #trigger action on Mach
             #determine the right side of the matrix for eq 2.25
             sum_nj_muj = 0
             for j in range( 0, num_react ):
-                sum_nj_muj = sum_nj_muj + nj[j]*muj[j]
+                sum_nj_muj += + nj[j]*muj[j]
+            sum_nj_muj = np.sum(nj*muj)
             rhs[num_element]=nmoles - sum_nj +sum_nj_muj
 
             #print b
