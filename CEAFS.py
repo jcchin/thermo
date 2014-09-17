@@ -64,19 +64,12 @@ class CEAFS():    #trigger action on Mach
         nmoles = .1 #CEA initial guess for a MW of 30 for final mixture
         nj = ones(num_react)/num_react
         muj= zeros(num_react)           
-        sj= [[0 for x in xrange(5)] for x in xrange(5)] 
 
-        # sum_nj_hj = 0.
-        # sum_nj_hj_h = 0.
-        # sum_nj_muj = 0.
-        # sum_muj_nj_hj = 0.
-        # sum_aij_nj= [[0 for x in xrange(5)] for x in xrange(5)] 
-
-        chmatrix= [[0 for x in xrange(3)] for x in xrange(3)]
-        b = np.zeros(num_element + 1)
+        chmatrix= np.zeros((num_element+1, num_element+1))
+        rhs = np.zeros(num_element + 1)
         dLn = np.zeros(num_react)
-        count = 0
-            
+        
+        count = 0    
         
         while count< 20:
             count = count + 1
@@ -112,17 +105,17 @@ class CEAFS():    #trigger action on Mach
             #determine right side of matrix for eq 2.24
             for i in range( 0, num_element ):
                 sum_aij_nj_muj = np.sum(self.aij[i]*nj*muj)
-                b[i]=bsub0[i]-bsubi[i]+sum_aij_nj_muj
+                rhs[i]=bsub0[i]-bsubi[i]+sum_aij_nj_muj
 
             #determine the right side of the matrix for eq 2.25
             sum_nj_muj = 0
             for j in range( 0, num_react ):
                 sum_nj_muj = sum_nj_muj + nj[j]*muj[j]
-            b[num_element]=nmoles - sum_nj +sum_nj_muj
+            rhs[num_element]=nmoles - sum_nj +sum_nj_muj
 
             #print b
             #solve it
-            results = linalg.solve( chmatrix, b )
+            results = linalg.solve( chmatrix, rhs )
             #print chmatrix,b
             
             #print results
