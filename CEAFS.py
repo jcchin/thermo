@@ -132,7 +132,7 @@ class CEAFS():    #trigger action on Mach
             if ( lambdaf > 1 ):
                 lambdaf = 1 
             #update total moles eq 3.4
-            nmoles = exp( math.log( nmoles ) + lambdaf*results[num_element] )
+            nmoles = exp( np.log( nmoles ) + lambdaf*results[num_element] )
 
             #update each reactant moles eq 3.4 and 2.18
             for j in range( 0, num_react ):
@@ -140,7 +140,7 @@ class CEAFS():    #trigger action on Mach
                 for i in range( 0, num_element ):
                     sum_aij_pi = sum_aij_pi+self.aij[i][j] * results[i]
                 dLn[j] = results[num_element]+sum_aij_pi-muj[j]
-                nj[j]= exp( math.log( nj[j] ) + lambdaf*dLn[j] )
+                nj[j]= exp( np.log( nj[j] ) + lambdaf*dLn[j] )
 
             
             # print np.linalg.norm(results - results_old)
@@ -148,7 +148,8 @@ class CEAFS():    #trigger action on Mach
             # print
             # print
 
-       	return nj/np.sum(nj)
+       	#return nj/np.sum(nj)
+       	return nj
 
                 
 
