@@ -4,6 +4,11 @@
 import math
 from numpy import *
 import numpy as np
+
+
+R =1.987 #universal gas constant
+
+
 class CEAFS():    #trigger action on Mach
     
     a=[
@@ -30,12 +35,10 @@ class CEAFS():    #trigger action on Mach
 
         
     def H0( self, T, species ):
-        R =1.987
-        return (-self.a[species][0]/T**2 + self.a[species][1]/T*math.log(T) + self.a[species][2] + self.a[species][3]*T/2 + self.a[species][4]*T**2/3 + self.a[species][5]*T**3/4 + self.a[species][6]*T**4/5+self.a[species][7]/T)
+        return (-self.a[species][0]/T**2 + self.a[species][1]/T*np.log(T) + self.a[species][2] + self.a[species][3]*T/2 + self.a[species][4]*T**2/3 + self.a[species][5]*T**3/4 + self.a[species][6]*T**4/5+self.a[species][7]/T)
     
     def S0( self, T, species ):
-        R =1.987
-        return (-self.a[species][0]/(2*T**2) - self.a[species][1]/T + self.a[species][2]*math.log(T) + self.a[species][3]*T + self.a[species][4]*T**2/2 + self.a[species][5]*T**3/3 + self.a[species][6]*T**4/5+self.a[species][8] )
+        return (-self.a[species][0]/(2*T**2) - self.a[species][1]/T + self.a[species][2]*np.log(T) + self.a[species][3]*T + self.a[species][4]*T**2/2 + self.a[species][5]*T**3/3 + self.a[species][6]*T**4/5+self.a[species][8] )
     
     def Cp( self, T, species ):
         return self.a[species][0]/T**2 + self.a[species][1]/T + self.a[species][2] + self.a[species][3]*T + self.a[species][4]*T**2 + self.a[species][5]*T**3 + self.a[species][6]*T**4 
@@ -48,8 +51,8 @@ class CEAFS():    #trigger action on Mach
         sum_njmuj = 0
         sum_mujnjhj = 0
         #sum_aij_nj =[][]
-        bsubi = np.zeros(num_element)
-        bsub0 = np.zeros(num_element)
+        bsubi = np.zeros(num_element, dtype='complex')
+        bsub0 = np.zeros(num_element, dtype='complex')
                 
         #deterine bsub0 - compute the distribution of elements from the distribution of reactants
         for i in range( 0, num_element ):
@@ -58,16 +61,18 @@ class CEAFS():    #trigger action on Mach
             for j in range( 0, num_react ):
                 sum_aij_nj +=  ( self.aij[i][j]*nj[j] )/self.wt_mole[j]
             bsub0[ i ] = sum_aij_nj    
-                        
-        print bsub0
-        
+                               
         nmoles = .1 #CEA initial guess for a MW of 30 for final mixture
-        nj = ones(num_react)/num_react
-        muj= zeros(num_react)           
+        nj = ones(num_react, dtype='complex')/num_react
+        muj= zeros(num_react, dtype='complex')           
 
-        chmatrix= np.zeros((num_element+1, num_element+1))
-        rhs = np.zeros(num_element + 1)
-        dLn = np.zeros(num_react)
+        chmatrix= np.zeros((num_element+1, num_element+1), dtype='complex')
+        rhs = np.zeros(num_element + 1, dtype='complex')
+        results = np.zeros(num_element + 1, dtype='complex')
+        results_old = np.zeros(num_element + 1, dtype='complex')
+        dLn = np.zeros(num_react, dtype="complex")
+
+
         
         count = 0    
         
@@ -81,49 +86,39 @@ class CEAFS():    #trigger action on Mach
             #calculate b_i for each element
             for i in range( 0, num_element ):
                 bsubi[ i ] =  np.sum(self.aij[i]*nj) 
-    
-            
+   
             #determine pi coef for 2.24 for each element
             for i in range( 0, num_element ):
                 for j in range( 0, num_element ):
-                    sum = 0
+                    tot = 0
                     for k in range( 0, num_react ):
-                        sum = sum +  self.aij[i][k]*self.aij[j][k]*nj[k]
-                    chmatrix[i][j] = sum
+                        tot += self.aij[i][k]*self.aij[j][k]*nj[k]
+                    chmatrix[i][j] = tot
             
             #determine the delta coeff for 2.24 and pi coef for 2.26
             for i in range( 0, num_element ):
                 chmatrix[num_element][i]=bsubi[i]
                 chmatrix[i][num_element]=bsubi[i]
         
-            #determine delta n coef for eq 2.25
-            sum_nj = 0 
-            for i in range( 0, num_react ):
-                sum_nj = sum_nj + nj[i]
-            chmatrix[num_element][num_element]=sum_nj-nmoles
+            #determine delta n coef for eq 2.26
+            sum_nj = np.sum(nj)
+            chmatrix[num_element][num_element] = sum_nj- nmoles
  
             #determine right side of matrix for eq 2.24
             for i in range( 0, num_element ):
                 sum_aij_nj_muj = np.sum(self.aij[i]*nj*muj)
                 rhs[i]=bsub0[i]-bsubi[i]+sum_aij_nj_muj
 
-            #determine the right side of the matrix for eq 2.25
-            sum_nj_muj = 0
-            for j in range( 0, num_react ):
-                sum_nj_muj += + nj[j]*muj[j]
+            #determine the right side of the matrix for eq 2.26
             sum_nj_muj = np.sum(nj*muj)
-            rhs[num_element]=nmoles - sum_nj +sum_nj_muj
+            rhs[num_element] = nmoles - sum_nj + sum_nj_muj
 
-            #print b
             #solve it
+            results_old = results.copy()
             results = linalg.solve( chmatrix, rhs )
-            #print chmatrix,b
             
-            #print results
             #determine lamdba eqns 3.1, 3.2, amd 3.3
-            max = 0
-            if abs( 5*results[num_element] ) > max: 
-                max = abs( 5*results[num_element] )
+            max = abs( 5*results[num_element] )
             
             for j in range( 0, num_react ):
                 sum_aij_pi = 0
@@ -136,7 +131,6 @@ class CEAFS():    #trigger action on Mach
             lambdaf = 2 / max
             if ( lambdaf > 1 ):
                 lambdaf = 1 
-            #print 'll',lambdaf
             #update total moles eq 3.4
             nmoles = exp( math.log( nmoles ) + lambdaf*results[num_element] )
 
@@ -149,10 +143,12 @@ class CEAFS():    #trigger action on Mach
                 nj[j]= exp( math.log( nj[j] ) + lambdaf*dLn[j] )
 
             
+            # print np.linalg.norm(results - results_old)
+            # print array(nj)/np.sum(nj)
+            # print
+            # print
 
-            print array(nj)/np.sum(nj)
-            print
-            print
+       	return nj/np.sum(nj)
 
                 
 
