@@ -76,7 +76,7 @@ class CEAFS():    #trigger action on Mach
         
         count = 0    
         
-        while count< 20:
+        while count< 9:
             count = count + 1
                 
             #calculate mu for each reactant
@@ -143,13 +143,15 @@ class CEAFS():    #trigger action on Mach
                 nj[j]= exp( np.log( nj[j] ) + lambdaf*dLn[j] )
 
             
-            # print np.linalg.norm(results - results_old)
+            #print count, np.linalg.norm(results - results_old)
             # print array(nj)/np.sum(nj)
             # print
             # print
-
-       	#return nj/np.sum(nj)
-       	return nj
+		
+		#print count, np.linalg.norm(results - results_old)
+        #exit()
+       	return nj/np.sum(nj)
+       	#return nj
 
                 
 
