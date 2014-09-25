@@ -99,11 +99,10 @@ class CEAFS(object):    #trigger action on Mach
     	self.P = P
 
     	count = 0    
-        while count< 20:
+        while count< 9:
             count = count + 1
 
             self._nj = self._resid_TP(self._nj)
-
         return self._nj/np.sum(self._nj)
 
     def _resid_TP(self, nj_guess): 
@@ -143,6 +142,7 @@ class CEAFS(object):    #trigger action on Mach
         #determine delta n coef for eq 2.26
         sum_nj = np.sum(nj)
         chmatrix[num_element][num_element] = sum_nj- nmoles
+        print chmatrix[num_element][num_element]
 
         #determine right side of matrix for eq 2.24
         for i in range( 0, num_element ):
@@ -154,6 +154,8 @@ class CEAFS(object):    #trigger action on Mach
         rhs[num_element] = nmoles - sum_nj + sum_nj_muj
 
         #solve it
+        #print "  ", chmatrix
+        #print "    ", rhs
         results = linalg.solve( chmatrix, rhs )
         
         #determine lamdba eqns 3.1, 3.2, amd 3.3

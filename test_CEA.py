@@ -9,6 +9,7 @@ baseline = CEA.matrix( 4000, 1.03 ) #kelvin, bars
 
 
 print baseline.real
+exit()
 
 fd_temp = []
 cs_temp= []
