@@ -1,6 +1,3 @@
-
-
-
 import math
 from numpy import *
 import numpy as np
@@ -57,9 +54,6 @@ class CEAFS(object):    #trigger action on Mach
 
         self.T = 4000
         self.P = 1.03
-
-
- 
         
     def H0( self, T, species ):
         return (-self.a[species][0]/T**2 + self.a[species][1]/T*np.log(T) + self.a[species][2] + self.a[species][3]*T/2 + self.a[species][4]*T**2/3 + self.a[species][5]*T**3/4 + self.a[species][6]*T**4/5+self.a[species][7]/T)
@@ -91,8 +85,6 @@ class CEAFS(object):    #trigger action on Mach
         nmoles = .1 #CEA initial guess for a MW of 30 for final mixture
         nj[:] = ones(num_react, dtype='complex')/num_react #reset initial guess to equal concentrations
 
-
-    
    
     def matrix(self, T, P ):
 
@@ -115,7 +107,8 @@ class CEAFS(object):    #trigger action on Mach
         self._eq_init()
 
         count = 0    
-        while count< 9:
+        while count < 9:
+
             count = count + 1
 
             nj = self._nj.copy()
@@ -158,9 +151,7 @@ class CEAFS(object):    #trigger action on Mach
             max = abs( 5*results[num_element] )
             
             for j in range( 0, num_react ):
-                sum_aij_pi = 0
-                for i in range( 0, num_element ):
-                    sum_aij_pi = sum_aij_pi+self.aij[i][j] * results[i]
+                sum_aij_pi = np.sum(self.aij[:,j] * results[:-1])
                 dLn[j] = results[num_element]+sum_aij_pi-muj[j]
                 if abs( dLn[j] ) > max:
                     max = abs( dLn[j] )
@@ -173,9 +164,8 @@ class CEAFS(object):    #trigger action on Mach
 
             #update each reactant moles eq 3.4 and 2.18
             for j in range( 0, num_react ):
-                sum_aij_pi = 0
-                for i in range( 0, num_element ):
-                    sum_aij_pi = sum_aij_pi+self.aij[i][j] * results[i]
+                sum_aij_pi = np.sum(self.aij[:,j] * results[:-1])
+
                 dLn[j] = results[num_element]+sum_aij_pi-muj[j]
                 nj[j]= exp( np.log( nj[j] ) + lambdaf*dLn[j] )
 
