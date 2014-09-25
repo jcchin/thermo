@@ -142,7 +142,7 @@ class CEAFS(object):    #trigger action on Mach
         #determine delta n coef for eq 2.26
         sum_nj = np.sum(nj)
         chmatrix[num_element][num_element] = sum_nj- nmoles
-        print chmatrix[num_element][num_element]
+        print sum_nj, nmoles
 
         #determine right side of matrix for eq 2.24
         for i in range( 0, num_element ):
@@ -172,8 +172,9 @@ class CEAFS(object):    #trigger action on Mach
         lambdaf = 2 / max
         if ( lambdaf > 1 ):
             lambdaf = 1 
+
         #update total moles eq 3.4
-        nmoles = exp( np.log( nmoles ) + lambdaf*results[num_element] )
+        self._nmoles = exp( np.log( nmoles ) + lambdaf*results[num_element] )
 
         #update each reactant moles eq 3.4 and 2.18
         for j in range( 0, num_react ):
