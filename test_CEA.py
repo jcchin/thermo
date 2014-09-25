@@ -8,7 +8,8 @@ CEA = CEAFS();
 baseline = CEA.matrix( 4000, 1.03 ) #kelvin, bars
 
 print baseline.real
-exit()
+
+
 
 fd_temp = []
 cs_temp= []
@@ -19,10 +20,10 @@ for p in np.linspace(1,15,50):
     step = 10.0**(-1*p)
     steps_temp.append(step)
 
-    fd_step = CEA.matrix(4000*(1+step), 1.03)
+    fd_step = CEA.matrix(4000*(1+step), 1.03).real
     cplex_step = CEA.matrix(complex(4000,step), 1.03)
 
-    fd_temp.append((fd_step-baseline).real/(4000*step))
+    fd_temp.append((fd_step-baseline)/(4000*step))
     cs_temp.append(cplex_step.imag/step)
 
     # print "step: %1.0e,     fd: %s"%(step,(fd_step-baseline).real/(step))
