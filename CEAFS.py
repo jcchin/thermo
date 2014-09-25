@@ -42,7 +42,7 @@ class CEAFS(object):    #trigger action on Mach
 
         self.muj= zeros(self.num_react, dtype='complex')     
 
-        chmatrix= np.zeros((num_element+1, num_element+1), dtype='complex')  
+        self.chmatrix= np.zeros((self.num_element+1, self.num_element+1), dtype='complex')  
         
     def H0( self, T, species ):
         return (-self.a[species][0]/T**2 + self.a[species][1]/T*np.log(T) + self.a[species][2] + self.a[species][3]*T/2 + self.a[species][4]*T**2/3 + self.a[species][5]*T**3/4 + self.a[species][6]*T**4/5+self.a[species][7]/T)
@@ -57,6 +57,7 @@ class CEAFS(object):    #trigger action on Mach
 
         num_react = self.num_react
         num_element = self.num_element
+        chmatrix = self.chmatrix
 
         nj = self.nj
         muj = self.muj
