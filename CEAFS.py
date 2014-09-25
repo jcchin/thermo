@@ -32,19 +32,24 @@ class CEAFS(object):    #trigger action on Mach
     element_wt = [ 12.01, 16.0 ]
     aij = np.array([ [1,1,0], [1,2,2] ])
 
-    num_element = 2
-    num_react = 3
+    _num_element = 2
+    _num_react = 3
 
 
     def __init__(self): 
 
-        self.nj = empty(self.num_react, dtype='complex')
+        self._nj = empty(self._num_react, dtype='complex')
 
-        self.muj= zeros(self.num_react, dtype='complex')     
+        self._muj= zeros(self._num_react, dtype='complex')     
 
-        self.chmatrix= np.zeros((self.num_element+1, self.num_element+1), dtype='complex') 
+        self._chmatrix= np.zeros((self._num_element+1, self._num_element+1), dtype='complex') 
 
-        self.rhs = np.zeros(self.num_element + 1, dtype='complex')
+        self._rhs = np.zeros(self._num_element + 1, dtype='complex')
+
+        self._results = np.zeros(self._num_element + 1, dtype='complex')
+
+        self._nmoles = .1
+
  
         
     def H0( self, T, species ):
@@ -58,17 +63,15 @@ class CEAFS(object):    #trigger action on Mach
     
     def matrix(self,T, P ):
 
-        num_react = self.num_react
-        num_element = self.num_element
-        chmatrix = self.chmatrix
-        rhs = self.rhs
+        num_react = self._num_react
+        num_element = self._num_element
+        chmatrix = self._chmatrix
+        rhs = self._rhs
+        results = self._results
+        nmoles = self._nmoles
 
-        nj = self.nj
-        muj = self.muj
-
-        sum_njhjh = 0
-        sum_njmuj = 0
-        sum_mujnjhj = 0
+        nj = self._nj
+        muj = self._muj
 
         bsubi = np.zeros(num_element, dtype='complex')
         bsub0 = np.zeros(num_element, dtype='complex')
@@ -77,16 +80,13 @@ class CEAFS(object):    #trigger action on Mach
 
         #deterine bsub0 - compute the distribution of elements from the distribution of reactants
         for i in range( 0, num_element ):
-            sum_aij_nj = 0
             sum_aij_nj = np.sum(self.aij[i] * nj / self.wt_mole)
             bsub0[ i ] = sum_aij_nj    
                                
         nmoles = .1 #CEA initial guess for a MW of 30 for final mixture
         
-        nj = ones(num_react, dtype='complex')/num_react
+        nj = ones(num_react, dtype='complex')/num_react #reset initial guess to equal concentrations
 
-        
-        results = np.zeros(num_element + 1, dtype='complex')
         dLn = np.zeros(num_react, dtype="complex")
 
         count = 0    
