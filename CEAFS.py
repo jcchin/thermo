@@ -9,7 +9,7 @@ import numpy as np
 R =1.987 #universal gas constant
 
 
-class CEAFS():    #trigger action on Mach
+class CEAFS(object):    #trigger action on Mach
     
     a=[
     [ #CO
@@ -28,10 +28,13 @@ class CEAFS():    #trigger action on Mach
     1.738716506e+01
     ]
     ]
-    wt_mole = [ 28.01, 44.01, 32. ]    
+    wt_mole = np.array([ 28.01, 44.01, 32. ])    
     element_wt = [ 12.01, 16.0 ]
     aij = np.array([ [1,1,0], [1,2,2] ])
     nj = [ 1, 0, 0  ]
+
+    num_element = 2
+    num_react = 3
 
         
     def H0( self, T, species ):
@@ -45,21 +48,21 @@ class CEAFS():    #trigger action on Mach
     
     def matrix(self,T, P ):
 
-        num_element = 2
-        num_react = 3
+        num_react = self.num_react
+        num_element = self.num_element
+
         sum_njhjh = 0
         sum_njmuj = 0
         sum_mujnjhj = 0
-        #sum_aij_nj =[][]
+
         bsubi = np.zeros(num_element, dtype='complex')
         bsub0 = np.zeros(num_element, dtype='complex')
                 
         #deterine bsub0 - compute the distribution of elements from the distribution of reactants
         for i in range( 0, num_element ):
             sum_aij_nj = 0
-            nj=[.0,1.,.0] #nj is the initial reactant mixture
-            for j in range( 0, num_react ):
-                sum_aij_nj +=  ( self.aij[i][j]*nj[j] )/self.wt_mole[j]
+            nj=np.array([.0,1.,.0]) #nj is the initial reactant mixture
+            sum_aij_nj = np.sum(self.aij[i] * nj / self.wt_mole)
             bsub0[ i ] = sum_aij_nj    
                                
         nmoles = .1 #CEA initial guess for a MW of 30 for final mixture
