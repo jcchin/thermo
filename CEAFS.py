@@ -91,7 +91,7 @@ class CEAFS(object):    #trigger action on Mach
         nj[:] = ones(num_react, dtype='complex')/num_react #reset initial guess to equal concentrations
 
 
-    def matrix(self, T, P ):
+    def set_total_TP(self, T, P ):
     	self._eq_init()
 
     	self.T = T
@@ -167,7 +167,7 @@ class CEAFS(object):    #trigger action on Mach
             if abs( dLn[j] ) > max:
                 max = abs( dLn[j] )
         
-        lambdaf = 2 / max
+        lambdaf = 2 / (max+1e-20)
         if ( lambdaf > 1 ):
             lambdaf = 1 
 

@@ -5,7 +5,7 @@ from CEAFS import CEAFS
 
 CEA = CEAFS();
 
-baseline = CEA.matrix( 4000, 1.03 ) #kelvin, bars
+baseline = CEA.set_total_TP( 4000, 1.03 ) #kelvin, bars
 
 print baseline.real
 
@@ -20,8 +20,8 @@ for p in np.linspace(1,15,50):
     step = 10.0**(-1*p)
     steps_temp.append(step)
 
-    fd_step = CEA.matrix(4000*(1+step), 1.03).real
-    cplex_step = CEA.matrix(complex(4000,step), 1.03)
+    fd_step = CEA.set_total_TP(4000*(1+step), 1.03).real
+    cplex_step = CEA.set_total_TP(complex(4000,step), 1.03)
 
     fd_temp.append((fd_step-baseline)/(4000*step))
     cs_temp.append(cplex_step.imag/step)
@@ -42,8 +42,8 @@ for p in np.linspace(1,15,50):
     step = 10.0**(-1*p)
     steps_press.append(step)
 
-    fd_step = CEA.matrix(4000, 1.03*(1+step))
-    cplex_step = CEA.matrix(4000, complex(1.03,step))
+    fd_step = CEA.set_total_TP(4000, 1.03*(1+step))
+    cplex_step = CEA.set_total_TP(4000, complex(1.03,step))
 
     fd_press.append((fd_step-baseline).real/(1.03*step))
     cs_press.append(cplex_step.imag/step)
