@@ -50,6 +50,12 @@ class CEAFS(object):    #trigger action on Mach
 
         self._nmoles = .1
 
+        self._bsubi = np.zeros(self._num_element, dtype='complex')
+        self._bsub0 = np.zeros(self._num_element, dtype='complex')
+
+        self._dLn = np.zeros(self._num_react, dtype="complex")
+
+
  
         
     def H0( self, T, species ):
@@ -61,20 +67,16 @@ class CEAFS(object):    #trigger action on Mach
     def Cp( self, T, species ):
         return self.a[species][0]/T**2 + self.a[species][1]/T + self.a[species][2] + self.a[species][3]*T + self.a[species][4]*T**2 + self.a[species][5]*T**3 + self.a[species][6]*T**4 
     
-    def matrix(self,T, P ):
+    
+    def _eq_init(self): 
 
         num_react = self._num_react
         num_element = self._num_element
-        chmatrix = self._chmatrix
-        rhs = self._rhs
-        results = self._results
         nmoles = self._nmoles
+        bsub0 = self._bsub0
 
         nj = self._nj
         muj = self._muj
-
-        bsubi = np.zeros(num_element, dtype='complex')
-        bsub0 = np.zeros(num_element, dtype='complex')
 
         nj[:] = [0.,1.,0.] #initial reactant mixture assumes all CO2
 
@@ -84,13 +86,31 @@ class CEAFS(object):    #trigger action on Mach
             bsub0[ i ] = sum_aij_nj    
                                
         nmoles = .1 #CEA initial guess for a MW of 30 for final mixture
-        
-        nj = ones(num_react, dtype='complex')/num_react #reset initial guess to equal concentrations
+        nj[:] = ones(num_react, dtype='complex')/num_react #reset initial guess to equal concentrations
 
-        dLn = np.zeros(num_react, dtype="complex")
+
+    
+        
+
+    def matrix(self,T, P ):
+
+    	num_react = self._num_react
+        num_element = self._num_element
+        chmatrix = self._chmatrix
+        rhs = self._rhs
+        results = self._results
+        nmoles = self._nmoles
+        bsub0 = self._bsub0
+        bsubi = self._bsubi
+
+      	dLn = self._dLn
+
+        nj = self._nj
+        muj = self._muj
+
+        self._eq_init()
 
         count = 0    
-        
         while count< 9:
             count = count + 1
                 
