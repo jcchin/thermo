@@ -31,11 +31,16 @@ class CEAFS(object):    #trigger action on Mach
     wt_mole = np.array([ 28.01, 44.01, 32. ])    
     element_wt = [ 12.01, 16.0 ]
     aij = np.array([ [1,1,0], [1,2,2] ])
-    nj = [ 1, 0, 0  ]
 
     num_element = 2
     num_react = 3
 
+
+    def __init__(self): 
+
+    	self.nj = empty(self.num_react, dtype='complex')
+
+        self.muj= zeros(self.num_react, dtype='complex')       
         
     def H0( self, T, species ):
         return (-self.a[species][0]/T**2 + self.a[species][1]/T*np.log(T) + self.a[species][2] + self.a[species][3]*T/2 + self.a[species][4]*T**2/3 + self.a[species][5]*T**3/4 + self.a[species][6]*T**4/5+self.a[species][7]/T)
@@ -51,23 +56,27 @@ class CEAFS(object):    #trigger action on Mach
         num_react = self.num_react
         num_element = self.num_element
 
+        nj = self.nj
+        muj = self.muj
+
         sum_njhjh = 0
         sum_njmuj = 0
         sum_mujnjhj = 0
 
         bsubi = np.zeros(num_element, dtype='complex')
         bsub0 = np.zeros(num_element, dtype='complex')
-                
+
+        nj[:] = [0.,1.,0.] #initial reactant mixture assumes all CO2
+
         #deterine bsub0 - compute the distribution of elements from the distribution of reactants
         for i in range( 0, num_element ):
             sum_aij_nj = 0
-            nj=np.array([.0,1.,.0]) #nj is the initial reactant mixture
             sum_aij_nj = np.sum(self.aij[i] * nj / self.wt_mole)
             bsub0[ i ] = sum_aij_nj    
                                
         nmoles = .1 #CEA initial guess for a MW of 30 for final mixture
+        
         nj = ones(num_react, dtype='complex')/num_react
-        muj= zeros(num_react, dtype='complex')           
 
         chmatrix= np.zeros((num_element+1, num_element+1), dtype='complex')
         rhs = np.zeros(num_element + 1, dtype='complex')
@@ -75,8 +84,6 @@ class CEAFS(object):    #trigger action on Mach
         results_old = np.zeros(num_element + 1, dtype='complex')
         dLn = np.zeros(num_react, dtype="complex")
 
-
-        
         count = 0    
         
         while count< 9:
