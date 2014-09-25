@@ -105,10 +105,7 @@ class CEAFS(object):    #trigger action on Mach
             #determine pi coef for 2.24 for each element
             for i in range( 0, num_element ):
                 for j in range( 0, num_element ):
-                    tot = 0
-                    for k in range( 0, num_react ):
-                        tot += self.aij[i][k]*self.aij[j][k]*nj[k]
-                    chmatrix[i][j] = tot
+                    chmatrix[i][j] = np.sum(self.aij[i]*self.aij[j]*nj)
             
             #determine the delta coeff for 2.24 and pi coef for 2.26
             for i in range( 0, num_element ):
