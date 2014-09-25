@@ -55,6 +55,9 @@ class CEAFS(object):    #trigger action on Mach
 
         self._dLn = np.zeros(self._num_react, dtype="complex")
 
+        self.T = 4000
+        self.P = 1.03
+
 
  
         
@@ -90,9 +93,8 @@ class CEAFS(object):    #trigger action on Mach
 
 
     
-        
-
-    def matrix(self,T, P ):
+   
+    def matrix(self, T, P ):
 
     	num_react = self._num_react
         num_element = self._num_element
@@ -108,6 +110,9 @@ class CEAFS(object):    #trigger action on Mach
         nj = self._nj
         muj = self._muj
 
+        self.T = T 
+        self.P = P 
+
         self._eq_init()
 
         count = 0    
@@ -116,7 +121,7 @@ class CEAFS(object):    #trigger action on Mach
                 
             #calculate mu for each reactant
             for i in range( 0, num_react ):
-                muj[i] = self.H0( T, i ) - self.S0(T,i) + np.log( nj[i] ) + np.log( P / nmoles ) #pressure in Bars
+                muj[i] = self.H0( self.T, i ) - self.S0(self.T,i) + np.log( nj[i] ) + np.log( self.P / nmoles ) #pressure in Bars
 
             #calculate b_i for each element
             for i in range( 0, num_element ):
