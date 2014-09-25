@@ -107,7 +107,6 @@ class CEAFS(object):    #trigger action on Mach
 
       	dLn = self._dLn
 
-        nj = self._nj
         muj = self._muj
 
         self.T = T 
@@ -118,7 +117,9 @@ class CEAFS(object):    #trigger action on Mach
         count = 0    
         while count< 9:
             count = count + 1
-                
+
+            nj = self._nj.copy()
+     
             #calculate mu for each reactant
             for i in range( 0, num_react ):
                 muj[i] = self.H0( self.T, i ) - self.S0(self.T,i) + np.log( nj[i] ) + np.log( self.P / nmoles ) #pressure in Bars
@@ -177,6 +178,9 @@ class CEAFS(object):    #trigger action on Mach
                     sum_aij_pi = sum_aij_pi+self.aij[i][j] * results[i]
                 dLn[j] = results[num_element]+sum_aij_pi-muj[j]
                 nj[j]= exp( np.log( nj[j] ) + lambdaf*dLn[j] )
+
+            resid = nj- self._nj
+            self._nj += resid
 
         return nj/np.sum(nj)
 
