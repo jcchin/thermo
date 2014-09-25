@@ -8,6 +8,8 @@ CEA = CEAFS();
 baseline = CEA.matrix( 4000, 1.03 ) #kelvin, bars
 
 
+print baseline.real
+
 fd_temp = []
 cs_temp= []
 steps_temp = []

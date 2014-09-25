@@ -55,6 +55,9 @@ class CEAFS(object):    #trigger action on Mach
 
         self._dLn = np.zeros(self._num_react, dtype="complex")
 
+        self.T = 4000 #Kelvin
+        self.P = 1.03 #Bar
+
 
  
         
@@ -89,10 +92,21 @@ class CEAFS(object):    #trigger action on Mach
         nj[:] = ones(num_react, dtype='complex')/num_react #reset initial guess to equal concentrations
 
 
-    
-        
+    def matrix(self,T , P ):
+    	self._eq_init()
 
-    def matrix(self,T, P ):
+    	self.T = T
+    	self.P = P
+
+    	count = 0    
+        while count< 20:
+            count = count + 1
+
+            self._nj = self._resid_TP(self._nj)
+
+        return self._nj/np.sum(self._nj)
+
+    def _resid_TP(self, nj_guess): 
 
     	num_react = self._num_react
         num_element = self._num_element
@@ -105,75 +119,71 @@ class CEAFS(object):    #trigger action on Mach
 
       	dLn = self._dLn
 
-        nj = self._nj
         muj = self._muj
-
-        self._eq_init()
-
-        count = 0    
-        while count< 9:
-            count = count + 1
-                
-            #calculate mu for each reactant
-            for i in range( 0, num_react ):
-                muj[i] = self.H0( T, i ) - self.S0(T,i) + np.log( nj[i] ) + np.log( P / nmoles ) #pressure in Bars
-
-            #calculate b_i for each element
-            for i in range( 0, num_element ):
-                bsubi[ i ] =  np.sum(self.aij[i]*nj) 
-   
-            #determine pi coef for 2.24 for each element
-            for i in range( 0, num_element ):
-                for j in range( 0, num_element ):
-                    chmatrix[i][j] = np.sum(self.aij[i]*self.aij[j]*nj)
-            
-            #determine the delta coeff for 2.24 and pi coef for 2.26
-            for i in range( 0, num_element ):
-                chmatrix[num_element][i]=bsubi[i]
-                chmatrix[i][num_element]=bsubi[i]
+        nj = nj_guess.copy()
         
-            #determine delta n coef for eq 2.26
-            sum_nj = np.sum(nj)
-            chmatrix[num_element][num_element] = sum_nj- nmoles
- 
-            #determine right side of matrix for eq 2.24
+        #calculate mu for each reactant
+        for i in range( 0, num_react ):
+            muj[i] = self.H0( self.T, i ) - self.S0(self.T,i) + np.log( nj[i] ) + np.log( self.P / nmoles ) #pressure in Bars
+
+        #calculate b_i for each element
+        for i in range( 0, num_element ):
+            bsubi[ i ] =  np.sum(self.aij[i]*nj) 
+
+        #determine pi coef for 2.24 for each element
+        for i in range( 0, num_element ):
+            for j in range( 0, num_element ):
+                chmatrix[i][j] = np.sum(self.aij[i]*self.aij[j]*nj)
+        
+        #determine the delta coeff for 2.24 and pi coef for 2.26
+        for i in range( 0, num_element ):
+            chmatrix[num_element][i]=bsubi[i]
+            chmatrix[i][num_element]=bsubi[i]
+    
+        #determine delta n coef for eq 2.26
+        sum_nj = np.sum(nj)
+        chmatrix[num_element][num_element] = sum_nj- nmoles
+
+        #determine right side of matrix for eq 2.24
+        for i in range( 0, num_element ):
+            sum_aij_nj_muj = np.sum(self.aij[i]*nj*muj)
+            rhs[i]=bsub0[i]-bsubi[i]+sum_aij_nj_muj
+
+        #determine the right side of the matrix for eq 2.26
+        sum_nj_muj = np.sum(nj*muj)
+        rhs[num_element] = nmoles - sum_nj + sum_nj_muj
+
+        #solve it
+        results = linalg.solve( chmatrix, rhs )
+        
+        #determine lamdba eqns 3.1, 3.2, amd 3.3
+        max = abs( 5*results[num_element] )
+        
+        for j in range( 0, num_react ):
+            sum_aij_pi = 0
             for i in range( 0, num_element ):
-                sum_aij_nj_muj = np.sum(self.aij[i]*nj*muj)
-                rhs[i]=bsub0[i]-bsubi[i]+sum_aij_nj_muj
+                sum_aij_pi = sum_aij_pi+self.aij[i][j] * results[i]
+            dLn[j] = results[num_element]+sum_aij_pi-muj[j]
+            if abs( dLn[j] ) > max:
+                max = abs( dLn[j] )
+        
+        lambdaf = 2 / max
+        if ( lambdaf > 1 ):
+            lambdaf = 1 
+        #update total moles eq 3.4
+        nmoles = exp( np.log( nmoles ) + lambdaf*results[num_element] )
 
-            #determine the right side of the matrix for eq 2.26
-            sum_nj_muj = np.sum(nj*muj)
-            rhs[num_element] = nmoles - sum_nj + sum_nj_muj
+        #update each reactant moles eq 3.4 and 2.18
+        for j in range( 0, num_react ):
+            sum_aij_pi = 0
+            for i in range( 0, num_element ):
+                sum_aij_pi = sum_aij_pi+self.aij[i][j] * results[i]
+            dLn[j] = results[num_element]+sum_aij_pi-muj[j]
+            nj[j]= exp( np.log( nj[j] ) + lambdaf*dLn[j] )
 
-            #solve it
-            results = linalg.solve( chmatrix, rhs )
-            
-            #determine lamdba eqns 3.1, 3.2, amd 3.3
-            max = abs( 5*results[num_element] )
-            
-            for j in range( 0, num_react ):
-                sum_aij_pi = 0
-                for i in range( 0, num_element ):
-                    sum_aij_pi = sum_aij_pi+self.aij[i][j] * results[i]
-                dLn[j] = results[num_element]+sum_aij_pi-muj[j]
-                if abs( dLn[j] ) > max:
-                    max = abs( dLn[j] )
-            
-            lambdaf = 2 / max
-            if ( lambdaf > 1 ):
-                lambdaf = 1 
-            #update total moles eq 3.4
-            nmoles = exp( np.log( nmoles ) + lambdaf*results[num_element] )
-
-            #update each reactant moles eq 3.4 and 2.18
-            for j in range( 0, num_react ):
-                sum_aij_pi = 0
-                for i in range( 0, num_element ):
-                    sum_aij_pi = sum_aij_pi+self.aij[i][j] * results[i]
-                dLn[j] = results[num_element]+sum_aij_pi-muj[j]
-                nj[j]= exp( np.log( nj[j] ) + lambdaf*dLn[j] )
-
-        return nj/np.sum(nj)
+        #return nj/np.sum(nj)
+        #return nj-nj_guess
+        return nj
 
                 
 
