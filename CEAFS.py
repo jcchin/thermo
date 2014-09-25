@@ -38,11 +38,14 @@ class CEAFS(object):    #trigger action on Mach
 
     def __init__(self): 
 
-    	self.nj = empty(self.num_react, dtype='complex')
+        self.nj = empty(self.num_react, dtype='complex')
 
         self.muj= zeros(self.num_react, dtype='complex')     
 
-        self.chmatrix= np.zeros((self.num_element+1, self.num_element+1), dtype='complex')  
+        self.chmatrix= np.zeros((self.num_element+1, self.num_element+1), dtype='complex') 
+
+        self.rhs = np.zeros(self.num_element + 1, dtype='complex')
+ 
         
     def H0( self, T, species ):
         return (-self.a[species][0]/T**2 + self.a[species][1]/T*np.log(T) + self.a[species][2] + self.a[species][3]*T/2 + self.a[species][4]*T**2/3 + self.a[species][5]*T**3/4 + self.a[species][6]*T**4/5+self.a[species][7]/T)
@@ -58,6 +61,7 @@ class CEAFS(object):    #trigger action on Mach
         num_react = self.num_react
         num_element = self.num_element
         chmatrix = self.chmatrix
+        rhs = self.rhs
 
         nj = self.nj
         muj = self.muj
@@ -82,9 +86,7 @@ class CEAFS(object):    #trigger action on Mach
         nj = ones(num_react, dtype='complex')/num_react
 
         
-        rhs = np.zeros(num_element + 1, dtype='complex')
         results = np.zeros(num_element + 1, dtype='complex')
-        results_old = np.zeros(num_element + 1, dtype='complex')
         dLn = np.zeros(num_react, dtype="complex")
 
         count = 0    
@@ -127,7 +129,6 @@ class CEAFS(object):    #trigger action on Mach
             rhs[num_element] = nmoles - sum_nj + sum_nj_muj
 
             #solve it
-            results_old = results.copy()
             results = linalg.solve( chmatrix, rhs )
             
             #determine lamdba eqns 3.1, 3.2, amd 3.3
@@ -155,16 +156,7 @@ class CEAFS(object):    #trigger action on Mach
                 dLn[j] = results[num_element]+sum_aij_pi-muj[j]
                 nj[j]= exp( np.log( nj[j] ) + lambdaf*dLn[j] )
 
-            
-            #print count, np.linalg.norm(results - results_old)
-            # print array(nj)/np.sum(nj)
-            # print
-            # print
-		
-		#print count, np.linalg.norm(results - results_old)
-        #exit()
-       	return nj/np.sum(nj)
-       	#return nj
+        return nj/np.sum(nj)
 
                 
 
