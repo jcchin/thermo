@@ -98,7 +98,7 @@ class CEAFS(object):    #trigger action on Mach
     	self.P = P
 
     	count = 0    
-        while count < 9:
+        while count < 20:
             count = count + 1
             self._nj += self._resid_TP(self._nj)
 
