@@ -22,9 +22,9 @@ base = CEA.matrix( 4000, 1.03 ) #kelvin, bars
 
 #     print (new-base).real/(4000*step - 4000)
 
-new = CEA.matrix (4001, 1.03).real
-new2 = CEA.matrix (4050, 1.03).real
+#new = CEA.matrix (4001, 1.03).real
+#new2 = CEA.matrix (4050, 1.03).real
 
 
-print "fd derivative:"
-print (new-base).real/(4001-4000)
+#print "fd derivative:"
+#print (new-base).real/(4001-4000)
