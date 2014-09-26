@@ -1,9 +1,7 @@
-
-
-
 import math
 from numpy import *
 import numpy as np
+from scipy.optimize import root
 
 
 R =1.987 #universal gas constant
@@ -92,13 +90,14 @@ class CEAFS(object):    #trigger action on Mach
 
 
     def set_total_TP(self, T, P ):
-    	self._eq_init()
+        self._eq_init()
 
-    	self.T = T
-    	self.P = P
+        self.T = T
+        self.P = P
 
-    	count = 0    
-        while count < 20:
+        #Gauss-Seidel Iteration
+        count = 0    
+        while count < 9:
             count = count + 1
             self._nj += self._resid_TP(self._nj)
 
@@ -106,7 +105,7 @@ class CEAFS(object):    #trigger action on Mach
 
     def _resid_TP(self, nj_guess): 
 
-    	num_react = self._num_react
+        num_react = self._num_react
         num_element = self._num_element
         chmatrix = self._chmatrix
         rhs = self._rhs
@@ -115,7 +114,7 @@ class CEAFS(object):    #trigger action on Mach
         bsub0 = self._bsub0
         bsubi = self._bsubi
 
-      	dLn = self._dLn
+        dLn = self._dLn
 
         muj = self._muj
         nj = nj_guess.copy()
