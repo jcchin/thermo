@@ -119,12 +119,15 @@ class CEAFS(object):    #trigger action on Mach
         rhs[:num_element] = self._bsubi
         rhs[num_element] = np.sum(self._nj)
 
+        self._Press[num_element, num_element] = 0
         results = linalg.solve( self._Press, rhs )
                            
         dlnVqdlnP = -1 + results[num_element]  
 
         #rhs for Cp constant T
         H0_T = self.H0(T) #compute this once, and use it a bunch of times
+
+        #determinerhs 2.56
         for i in range( 0, num_element ):
             sum_aij_nj_Hj = np.sum(self.aij[i]*nj*H0_T)
             rhs[i]=sum_aij_nj_Hj
@@ -133,6 +136,7 @@ class CEAFS(object):    #trigger action on Mach
         sum_nj_Hj = np.sum(nj*H0_T)
         rhs[num_element]=sum_nj_Hj
 
+        self._Temp[num_element, num_element] = 0
         results = linalg.solve( self._Temp, rhs )
         dlnVqdlnT = 1 + results[num_element]
 
