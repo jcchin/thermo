@@ -5,9 +5,15 @@ from CEAFS import CEAFS
 
 CEA = CEAFS();
 
-baseline = CEA.set_total_TP( 4000, 1.03 ) #kelvin, bars
+P_base = 1.03
+T_base = 4000
 
-print baseline.real
+baseline = CEA.set_total_TP( T_base, P_base ) #kelvin, bars
+
+print CEA._nj.real
+print CEA.Cp.real
+print CEA.Cv.real
+exit()
 
 
 
@@ -20,10 +26,10 @@ for p in np.linspace(1,15,50):
     step = 10.0**(-1*p)
     steps_temp.append(step)
 
-    fd_step = CEA.set_total_TP(4000*(1+step), 1.03).real
-    cplex_step = CEA.set_total_TP(complex(4000,step), 1.03)
+    fd_step = CEA.set_total_TP(T_base*(1+step), P_base).real
+    cplex_step = CEA.set_total_TP(complex(T_base,step), P_base)
 
-    fd_temp.append((fd_step-baseline)/(4000*step))
+    fd_temp.append((fd_step-baseline)/(T_base*step))
     cs_temp.append(cplex_step.imag/step)
 
     # print "step: %1.0e,     fd: %s"%(step,(fd_step-baseline).real/(step))
@@ -42,10 +48,10 @@ for p in np.linspace(1,15,50):
     step = 10.0**(-1*p)
     steps_press.append(step)
 
-    fd_step = CEA.set_total_TP(4000, 1.03*(1+step))
-    cplex_step = CEA.set_total_TP(4000, complex(1.03,step))
+    fd_step = CEA.set_total_TP(T_base, P_base*(1+step))
+    cplex_step = CEA.set_total_TP(T_base, complex(P_base,step))
 
-    fd_press.append((fd_step-baseline).real/(1.03*step))
+    fd_press.append((fd_step-baseline).real/(P_base*step))
     cs_press.append(cplex_step.imag/step)
 
     # print "step: %1.0e,     fd: %s"%(step,(fd_step-baseline).real/(1.03*step))

@@ -40,7 +40,9 @@ class CEAFS(object):    #trigger action on Mach
 
         self._muj= zeros(self._num_react, dtype='complex')     
 
-        self._chmatrix= np.zeros((self._num_element+1, self._num_element+1), dtype='complex') 
+        self._Chem = np.zeros((self._num_element+1, self._num_element+1), dtype='complex') 
+        self._Temp = np.zeros((self._num_element+1, self._num_element+1), dtype='complex') 
+        self._Press= np.zeros((self._num_element+1, self._num_element+1), dtype='complex') 
 
         self._rhs = np.zeros(self._num_element + 1, dtype='complex')
 
@@ -65,7 +67,7 @@ class CEAFS(object):    #trigger action on Mach
     def S0( self, T, species ):
         return (-self.a[species][0]/(2*T**2) - self.a[species][1]/T + self.a[species][2]*np.log(T) + self.a[species][3]*T + self.a[species][4]*T**2/2 + self.a[species][5]*T**3/3 + self.a[species][6]*T**4/5+self.a[species][8] )
     
-    def Cp( self, T, species ):
+    def Cp0( self, T, species ):
         return self.a[species][0]/T**2 + self.a[species][1]/T + self.a[species][2] + self.a[species][3]*T + self.a[species][4]*T**2 + self.a[species][5]*T**3 + self.a[species][6]*T**4 
     
     
@@ -97,17 +99,78 @@ class CEAFS(object):    #trigger action on Mach
 
         #Gauss-Seidel Iteration
         count = 0    
-        while count < 9:
+        while count < 20:
             count = count + 1
             self._nj += self._resid_TP(self._nj)
 
-        return self._nj/np.sum(self._nj)
+        sum_nj = np.sum(self._nj)
+        nj = self._nj
+
+        num_element = self._num_element
+        num_react = self._num_react
+        nmoles = self._nmoles
+        results = self._results
+        rhs = self._rhs
+
+        #rhs for Cp constant p 
+        rhs[:num_element] = self._bsubi
+        rhs[num_element] = np.sum(self._nj)
+
+        results = linalg.solve( self._Press, rhs )
+                           
+        dlnVqdlnP = -1 + results[num_element]  
+
+        #rhs for Cp constant T
+        for i in range( 0, num_element ):
+            sum_aij_nj_Hj = 0    
+            for j in range( 0, num_react ):
+                sum_aij_nj_Hj = sum_aij_nj_Hj+self.aij[i][j]*nj[j]*self.H0(T,j)
+            rhs[i]=sum_aij_nj_Hj
+
+        #determinerhs 2.58
+        sum_nj_Hj = 0
+        for j in range( 0, num_react ):
+             sum_nj_Hj += nj[j]*self.H0(T,j)
+        rhs[num_element]=sum_nj_Hj
+
+        results = linalg.solve( self._Temp, rhs )
+        dlnVqdlnT = 1 + results[num_element]
+        print "dlnVqdlnT", dlnVqdlnT
+
+        Cpf = 0
+        for j in range( 0, num_react ):
+            Cpf += nj[j]*self.Cp0( T, j )
+
+        Cpe = 0 
+        for i in range( 0, num_element ):
+            sum_aijnjhj = 0
+            Cpr = 0
+            for j in range( 0, num_react ):
+                sum_aijnjhj = sum_aijnjhj + self.aij[i][j]*nj[j]*self.H0(T,j)
+            Cpe = Cpe +  sum_aijnjhj*results[i]
+
+        for j in range( 0, num_react ):
+            Cpe = Cpe + nj[j]**2*self.H0(T,j)**2;
+            
+        for j in range( 0, num_react ):
+            Cpe = Cpe + nj[j]*self.H0(T,j)*results[num_element];
+
+
+        self.Cp = (Cpe+Cpf)*1.987
+        self.Cv = self.Cp + nmoles*1.987*dlnVqdlnT**2/dlnVqdlnP
+        self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
+
+        return nj/sum_nj
 
     def _resid_TP(self, nj_guess): 
 
         num_react = self._num_react
         num_element = self._num_element
-        chmatrix = self._chmatrix
+
+        chmatrix = self._Chem
+        pmatrix = self._Temp
+        tmatrix = self._Press
+
         rhs = self._rhs
         results = self._results
         nmoles = self._nmoles
@@ -127,16 +190,29 @@ class CEAFS(object):    #trigger action on Mach
         for i in range( 0, num_element ):
             bsubi[ i ] =  np.sum(self.aij[i]*nj) 
 
-        #determine pi coef for 2.24 for each element
+        ##determine pi coef for 2.24, 2.56, and 2.64 for each element
         for i in range( 0, num_element ):
             for j in range( 0, num_element ):
-                chmatrix[i][j] = np.sum(self.aij[i]*self.aij[j]*nj)
+                tot = np.sum(self.aij[i]*self.aij[j]*nj)
+                chmatrix[i][j] = tot
+                tmatrix[i][j] = tot
+                pmatrix[i][j] = tot
+
+
+        #determine the delta n coeff for 2.24, dln/dlnT coeff for 2.56, and dln/dlP coeff 2.64
+        #and pi coef for 2.26,  dpi/dlnT for 2.58, and dpi/dlnP for 2.66
+        #and rhs of 2.64
         
-        #determine the delta coeff for 2.24 and pi coef for 2.26
+        #determine the delta coeff for 2.24 and pi coef for 2.26\
         for i in range( 0, num_element ):
             chmatrix[num_element][i]=bsubi[i]
             chmatrix[i][num_element]=bsubi[i]
-    
+            tmatrix[num_element][i] =bsubi[i]
+            tmatrix[i][num_element] =bsubi[i]
+            pmatrix[num_element][i] =bsubi[i]
+            pmatrix[i][num_element] =bsubi[i]    
+
+
         #determine delta n coef for eq 2.26
         sum_nj = np.sum(nj)
         chmatrix[num_element][num_element] = sum_nj- nmoles
@@ -146,7 +222,7 @@ class CEAFS(object):    #trigger action on Mach
             sum_aij_nj_muj = np.sum(self.aij[i]*nj*muj)
             rhs[i]=bsub0[i]-bsubi[i]+sum_aij_nj_muj
 
-        #determine the right side of the matrix for eq 2.26
+        #determine the right side of the matrix for eq 2.36
         sum_nj_muj = np.sum(nj*muj)
         rhs[num_element] = nmoles - sum_nj + sum_nj_muj
 
