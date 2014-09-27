@@ -192,7 +192,6 @@ class CEAFS():    #trigger action on Mach
 
         s = 0
         for j in range( 0, num_react ):
-            print nj[j]/nmoles
             s = s + nj[j]*(self.S0( T, j )*8314.51/4184. -8314.51/4184.*log( nj[j]/nmoles)-8314.51/4184.*log( P ))
                      
         Cpf = 0
@@ -220,6 +219,8 @@ class CEAFS():    #trigger action on Mach
         dlnVqdlnT = 1 - resultst[num_element]
         dlnVqdlnP = -1 + resultsp[num_element]    
         
+        print Cpe, Cpf
+        exit()
         Cp = (Cpe+Cpf)*1.987
 
         Cv = Cp + nmoles*1.987*dlnVqdlnT**2/dlnVqdlnP

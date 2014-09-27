@@ -4,7 +4,7 @@ from CEAFS import CEAFS
 
 CEA = CEAFS();
 
-base = CEA.matrix( 4000, 1.0207 ) #kelvin, bars
+base = CEA.matrix( 4000, 1.03 ) #kelvin, bars
 
 # mole_frac = CEA.matrix(4000+.01j, 1.03)
 
