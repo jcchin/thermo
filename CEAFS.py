@@ -92,6 +92,14 @@ class CEAFS(object):    #trigger action on Mach
 
 
     def set_total_TP(self, T, P ):
+
+        nj = self._nj
+        num_element = self._num_element
+        num_react = self._num_react
+        nmoles = self._nmoles
+        results = self._results
+        rhs = self._rhs
+
         self._eq_init()
 
         self.T = T
@@ -103,14 +111,7 @@ class CEAFS(object):    #trigger action on Mach
             count = count + 1
             self._nj += self._resid_TP(self._nj)
 
-        sum_nj = np.sum(self._nj)
-        nj = self._nj
-
-        num_element = self._num_element
-        num_react = self._num_react
-        nmoles = self._nmoles
-        results = self._results
-        rhs = self._rhs
+        sum_nj = np.sum(nj)
 
         #rhs for Cp constant p 
         rhs[:num_element] = self._bsubi
@@ -135,7 +136,6 @@ class CEAFS(object):    #trigger action on Mach
 
         results = linalg.solve( self._Temp, rhs )
         dlnVqdlnT = 1 + results[num_element]
-        print "dlnVqdlnT", dlnVqdlnT
 
         Cpf = 0
         for j in range( 0, num_react ):

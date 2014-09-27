@@ -5,14 +5,14 @@ from CEAFS import CEAFS
 
 CEA = CEAFS();
 
-P_base = 1.03
+P_base = 1.0207
 T_base = 4000
 
 baseline = CEA.set_total_TP( T_base, P_base ) #kelvin, bars
 
 print CEA._nj.real
 print CEA.Cp.real
-print CEA.Cv.real
+print CEA.gamma.real
 exit()
 
 
