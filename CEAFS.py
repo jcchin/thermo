@@ -9,7 +9,7 @@ R =1.987 #universal gas constant
 
 class CEAFS(object):    #trigger action on Mach
     
-    a=[
+    a=np.array([
     [ #CO
     4.619197250e+05,-1.944704863e+03,5.916714180e+00,-5.664282830e-04,
     1.398814540e-07,-1.787680361e-11,9.620935570e-16,-2.466261084e+03,
@@ -25,7 +25,7 @@ class CEAFS(object):    #trigger action on Mach
     -2.188067988e-07,2.053719572e-11,-8.193467050e-16,-1.689010929e+04,
     1.738716506e+01
     ]
-    ]
+    ])
     wt_mole = np.array([ 28.01, 44.01, 32. ])    
     element_wt = [ 12.01, 16.0 ]
     aij = np.array([ [1,1,0], [1,2,2] ])
@@ -58,17 +58,18 @@ class CEAFS(object):    #trigger action on Mach
         self.T = 0 #Kelvin
         self.P = 0 #Bar
 
-
- 
         
-    def H0( self, T, species ):
-        return (-self.a[species][0]/T**2 + self.a[species][1]/T*np.log(T) + self.a[species][2] + self.a[species][3]*T/2 + self.a[species][4]*T**2/3 + self.a[species][5]*T**3/4 + self.a[species][6]*T**4/5+self.a[species][7]/T)
+    def H0( self, T ):
+        ai = self.a.T
+        return (-ai[0]/T**2 + ai[1]/T*np.log(T) + ai[2] + ai[3]*T/2 + ai[4]*T**2/3 + ai[5]*T**3/4 + ai[6]*T**4/5+ai[7]/T)
     
-    def S0( self, T, species ):
-        return (-self.a[species][0]/(2*T**2) - self.a[species][1]/T + self.a[species][2]*np.log(T) + self.a[species][3]*T + self.a[species][4]*T**2/2 + self.a[species][5]*T**3/3 + self.a[species][6]*T**4/5+self.a[species][8] )
+    def S0( self, T ):
+        ai = self.a.T
+        return (-ai[0]/(2*T**2) - ai[1]/T + ai[2]*np.log(T) + ai[3]*T + ai[4]*T**2/2 + ai[5]*T**3/3 + ai[6]*T**4/5+ai[8] )
     
-    def Cp0( self, T, species ):
-        return self.a[species][0]/T**2 + self.a[species][1]/T + self.a[species][2] + self.a[species][3]*T + self.a[species][4]*T**2 + self.a[species][5]*T**3 + self.a[species][6]*T**4 
+    def Cp0( self, T):
+        ai = self.a.T
+        return ai[0]/T**2 + ai[1]/T + ai[2] + ai[3]*T + ai[4]*T**2 + ai[5]*T**3 + ai[6]*T**4 
     
     
     def _eq_init(self): 
@@ -113,6 +114,7 @@ class CEAFS(object):    #trigger action on Mach
 
         sum_nj = np.sum(nj)
 
+
         #rhs for Cp constant p 
         rhs[:num_element] = self._bsubi
         rhs[num_element] = np.sum(self._nj)
@@ -122,38 +124,26 @@ class CEAFS(object):    #trigger action on Mach
         dlnVqdlnP = -1 + results[num_element]  
 
         #rhs for Cp constant T
+        H0_T = self.H0(T) #compute this once, and use it a bunch of times
         for i in range( 0, num_element ):
-            sum_aij_nj_Hj = 0    
-            for j in range( 0, num_react ):
-                sum_aij_nj_Hj = sum_aij_nj_Hj+self.aij[i][j]*nj[j]*self.H0(T,j)
+            sum_aij_nj_Hj = np.sum(self.aij[i]*nj*H0_T)
             rhs[i]=sum_aij_nj_Hj
 
         #determinerhs 2.58
-        sum_nj_Hj = 0
-        for j in range( 0, num_react ):
-             sum_nj_Hj += nj[j]*self.H0(T,j)
+        sum_nj_Hj = np.sum(nj*H0_T)
         rhs[num_element]=sum_nj_Hj
 
         results = linalg.solve( self._Temp, rhs )
         dlnVqdlnT = 1 + results[num_element]
 
-        Cpf = 0
-        for j in range( 0, num_react ):
-            Cpf += nj[j]*self.Cp0( T, j )
+        Cpf = np.sum(nj*self.Cp0(T))
 
         Cpe = 0 
         for i in range( 0, num_element ):
-            sum_aijnjhj = 0
-            Cpr = 0
-            for j in range( 0, num_react ):
-                sum_aijnjhj = sum_aijnjhj + self.aij[i][j]*nj[j]*self.H0(T,j)
-            Cpe = Cpe +  sum_aijnjhj*results[i]
-
-        for j in range( 0, num_react ):
-            Cpe = Cpe + nj[j]**2*self.H0(T,j)**2;
-            
-        for j in range( 0, num_react ):
-            Cpe = Cpe + nj[j]*self.H0(T,j)*results[num_element];
+            sum_aijnjhj = np.sum(self.aij[i]*nj*H0_T)
+            Cpe += sum_aijnjhj*results[i]
+        Cpe += np.sum(nj**2*H0_T**2)
+        Cpe += np.sum(nj*H0_T*results[num_element])
 
 
         self.Cp = (Cpe+Cpf)*1.987
@@ -183,8 +173,7 @@ class CEAFS(object):    #trigger action on Mach
         nj = nj_guess.copy()
         
         #calculate mu for each reactant
-        for i in range( 0, num_react ):
-            muj[i] = self.H0( self.T, i ) - self.S0(self.T,i) + np.log( nj[i] ) + np.log( self.P / nmoles ) #pressure in Bars
+        muj = self.H0(self.T) - self.S0(self.T) + np.log(nj) + np.log(self.P/nmoles) #pressure in Bars
 
         #calculate b_i for each element
         for i in range( 0, num_element ):
