@@ -115,8 +115,8 @@ class CEAFS():    #trigger action on Mach
 
                 
             for i in range( 0, num_element ):
-            	rhspmatrix[i]=bsubi[i]
-            	    
+                rhspmatrix[i]=bsubi[i]
+                    
         
             #determine delta n coef for eq 2.26
             sum_nj = np.sum(nj)
@@ -138,21 +138,21 @@ class CEAFS():    #trigger action on Mach
             #determine the right side of the matrix for eq 2.36
             sum_nj_muj = np.sum(nj*muj)
             rhs[num_element] = nmoles - sum_nj + sum_nj_muj
-			            	    
+                                
             #determinerhs 2.56
             for i in range( 0, num_element ):
-            	sum_aij_nj_Hj = 0    
+                sum_aij_nj_Hj = 0    
                 for j in range( 0, num_react ):
-                	sum_aij_nj_Hj = sum_aij_nj_Hj+self.aij[i][j]*nj[j]*self.H0(T,j)
-		rhstmatrix[i]=sum_aij_nj_Hj
+                    sum_aij_nj_Hj = sum_aij_nj_Hj+self.aij[i][j]*nj[j]*self.H0(T,j)
+            rhstmatrix[i]=sum_aij_nj_Hj
 
-                  	
+                      
             #determinerhs 2.58
             sum_nj_Hj = 0
             for j in range( 0, num_react ):
-           	  sum_nj_Hj += nj[j]*self.H0(T,j)
-	    rhstmatrix[num_element]=sum_nj_Hj
-		
+                sum_nj_Hj += nj[j]*self.H0(T,j)
+            rhstmatrix[num_element]=sum_nj_Hj
+        
             #solve it
             results_old = results.copy()
             results = linalg.solve( chmatrix, rhs )
@@ -180,55 +180,56 @@ class CEAFS():    #trigger action on Mach
 
             #update each reactant moles eq 3.4 and 2.18
             for j in range( 0, num_react ):
-            	    sum_aij_pi = 0
-            	    for i in range( 0, num_element ):
-            	    	    sum_aij_pi = sum_aij_pi+self.aij[i][j] * results[i]
-            	    dLn[j] = results[num_element]+sum_aij_pi-muj[j]
-            	    nj[j]= exp( np.log( nj[j] ) + lambdaf*dLn[j] )
+                    sum_aij_pi = 0
+                    for i in range( 0, num_element ):
+                            sum_aij_pi = sum_aij_pi+self.aij[i][j] * results[i]
+                    dLn[j] = results[num_element]+sum_aij_pi-muj[j]
+                    nj[j]= exp( np.log( nj[j] ) + lambdaf*dLn[j] )
 
- 	h = 0.
- 	for j in range( 0, num_react ):
-		h = h + nj[j]*self.H0( T, j )*8314.51/4184.*T
+        h = 0.
+        for j in range( 0, num_react ):
+            h = h + nj[j]*self.H0( T, j )*8314.51/4184.*T
 
-	s = 0
-	for j in range( 0, num_react ):
-		print nj[j]/nmoles
-		s = s + nj[j]*(self.S0( T, j )*8314.51/4184. -8314.51/4184.*log( nj[j]/nmoles)-8314.51/4184.*log( P ))
-				 
-	Cpf = 0
-	for j in range( 0, num_react ):
-		Cpf = Cpf + nj[j]*self.Cp( T, j )
-			           
-	dlnVqdlnT = 1 + resultsp[num_element]
-	dlnVqdlnP = -1 + resultst[num_element]	
-		
-	Cpe = 0	
-	for i in range( 0, num_element ):
-		sum_aijnjhj = 0
-		Cpr = 0
-		for j in range( 0, num_react ):
-			sum_aijnjhj = sum_aijnjhj + self.aij[i][j]*nj[j]*self.H0(T,j)
-		Cpe = Cpe +  sum_aijnjhj*resultst[i]
+        s = 0
+        for j in range( 0, num_react ):
+            print nj[j]/nmoles
+            s = s + nj[j]*(self.S0( T, j )*8314.51/4184. -8314.51/4184.*log( nj[j]/nmoles)-8314.51/4184.*log( P ))
+                     
+        Cpf = 0
+        for j in range( 0, num_react ):
+            Cpf = Cpf + nj[j]*self.Cp( T, j )
+                           
+        dlnVqdlnT = 1 + resultsp[num_element]
+        dlnVqdlnP = -1 + resultst[num_element]    
+            
+        Cpe = 0    
+        for i in range( 0, num_element ):
+            sum_aijnjhj = 0
+            Cpr = 0
+            for j in range( 0, num_react ):
+                sum_aijnjhj = sum_aijnjhj + self.aij[i][j]*nj[j]*self.H0(T,j)
+            Cpe = Cpe +  sum_aijnjhj*resultst[i]
 
-	for j in range( 0, num_react ):
-		Cpe = Cpe + nj[j]**2*self.H0(T,j)**2;
-		
-	for j in range( 0, num_react ):
-		Cpe = Cpe + nj[j]*self.H0(T,j)*resultst[num_element];
+        for j in range( 0, num_react ):
+            Cpe = Cpe + nj[j]**2*self.H0(T,j)**2;
+            
+        for j in range( 0, num_react ):
+            Cpe = Cpe + nj[j]*self.H0(T,j)*resultst[num_element];
 
-	rho = P*100/(nmoles*8314*T)			
-	dlnVqdlnT = 1 - resultst[num_element]
-	dlnVqdlnP = -1 + resultsp[num_element]	
-	
-	Cp = (Cpe+Cpf)*1.987
+        rho = P*100/(nmoles*8314*T)            
+        dlnVqdlnT = 1 - resultst[num_element]
+        dlnVqdlnP = -1 + resultsp[num_element]    
+        
+        Cp = (Cpe+Cpf)*1.987
 
-	Cv = Cp + nmoles*1.987*dlnVqdlnT**2/dlnVqdlnP
+        Cv = Cp + nmoles*1.987*dlnVqdlnT**2/dlnVqdlnP
 
-	gamma = -1*( Cp / Cv )/dlnVqdlnP
+        gamma = -1*( Cp / Cv )/dlnVqdlnP
 
-	print gamma,Cp
-	print nj
-	return nj
+        print "HERE"
+        print gamma,Cp
+        print nj
+        return nj
 
                 
 
