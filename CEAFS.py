@@ -149,7 +149,8 @@ class CEAFS(object):    #trigger action on Mach
         Cpe += np.sum(nj**2*H0_T**2)
         Cpe += np.sum(nj*H0_T*results[num_element])
 
-
+        print Cpe, Cpf 
+        exit()
         self.Cp = (Cpe+Cpf)*1.987
         self.Cv = self.Cp + nmoles*1.987*dlnVqdlnT**2/dlnVqdlnP
         self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
