@@ -96,7 +96,6 @@ class CEAFS(object):    #trigger action on Mach
         nj = self._nj
         num_element = self._num_element
         num_react = self._num_react
-        nmoles = self._nmoles
         results = self._results
         rhs = self._rhs
 
@@ -152,12 +151,10 @@ class CEAFS(object):    #trigger action on Mach
         Cpe += np.sum(nj*H0_T*results[num_element])
 
         self.Cp = (Cpe+Cpf)*1.987
-        self.Cv = self.Cp + nmoles*1.987*dlnVqdlnT**2/dlnVqdlnP
+        self.Cv = self.Cp + self._nmoles*1.987*dlnVqdlnT**2/dlnVqdlnP
         self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
 
-        print dlnVqdlnT
-        print dlnVqdlnP
-        exit()
+        print self.Cv, self._nmoles
 
         return nj/sum_nj
 
