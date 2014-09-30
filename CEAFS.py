@@ -136,14 +136,8 @@ class CEAFS(object):    #trigger action on Mach
         sum_nj_Hj = np.sum(nj*H0_T)
         rhs[num_element]=sum_nj_Hj
 
-
-
         self._Temp[num_element, num_element] = 0
         results = linalg.solve( self._Temp, rhs )
-
-        print self._Temp.real
-        print rhs.real
-        exit()
 
         dlnVqdlnT = 1 + results[num_element]
 
@@ -159,6 +153,10 @@ class CEAFS(object):    #trigger action on Mach
         self.Cp = (Cpe+Cpf)*1.987
         self.Cv = self.Cp + nmoles*1.987*dlnVqdlnT**2/dlnVqdlnP
         self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
+
+        print dlnVqdlnT
+        print dlnVqdlnP
+        exit()
 
         return nj/sum_nj
 
