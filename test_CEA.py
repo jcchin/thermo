@@ -13,7 +13,7 @@ baseline = CEA.set_total_TP( T_base, P_base ) #kelvin, bars
 print CEA._nj.real/np.sum(CEA._nj.real)
 print CEA.Cp.real
 print CEA.gamma.real
-
+exit()
 fd_temp = []
 cs_temp= []
 steps_temp = []

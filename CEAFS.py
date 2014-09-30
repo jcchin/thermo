@@ -131,21 +131,20 @@ class CEAFS(object):    #trigger action on Mach
             sum_aij_nj_Hj = np.sum(self.aij[i]*nj*H0_T)
             rhs[i]=sum_aij_nj_Hj
 
-        for i in range( 0, num_element ):
-            sum_aij_nj_Hj = 0    
-            for j in range( 0, num_react ):
-                sum_aij_nj_Hj = sum_aij_nj_Hj+self.aij[i][j]*nj[j]*self.H0(T,j)
-        print rhs
 
         #determinerhs 2.58
         sum_nj_Hj = np.sum(nj*H0_T)
         rhs[num_element]=sum_nj_Hj
 
-        print rhs 
-        exit()
+
 
         self._Temp[num_element, num_element] = 0
         results = linalg.solve( self._Temp, rhs )
+
+        print self._Temp.real
+        print rhs.real
+        exit()
+
         dlnVqdlnT = 1 + results[num_element]
 
         Cpf = np.sum(nj*self.Cp0(T))
