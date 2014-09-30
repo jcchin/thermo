@@ -1,7 +1,6 @@
 import math
 from numpy import *
 import numpy as np
-from scipy.optimize import root
 
 
 R =1.987 #universal gas constant
@@ -132,9 +131,18 @@ class CEAFS(object):    #trigger action on Mach
             sum_aij_nj_Hj = np.sum(self.aij[i]*nj*H0_T)
             rhs[i]=sum_aij_nj_Hj
 
+        for i in range( 0, num_element ):
+            sum_aij_nj_Hj = 0    
+            for j in range( 0, num_react ):
+                sum_aij_nj_Hj = sum_aij_nj_Hj+self.aij[i][j]*nj[j]*self.H0(T,j)
+        print rhs
+
         #determinerhs 2.58
         sum_nj_Hj = np.sum(nj*H0_T)
         rhs[num_element]=sum_nj_Hj
+
+        print rhs 
+        exit()
 
         self._Temp[num_element, num_element] = 0
         results = linalg.solve( self._Temp, rhs )
@@ -149,8 +157,6 @@ class CEAFS(object):    #trigger action on Mach
         Cpe += np.sum(nj**2*H0_T**2)
         Cpe += np.sum(nj*H0_T*results[num_element])
 
-        print Cpe, Cpf 
-        exit()
         self.Cp = (Cpe+Cpf)*1.987
         self.Cv = self.Cp + nmoles*1.987*dlnVqdlnT**2/dlnVqdlnP
         self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
