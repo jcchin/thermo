@@ -120,7 +120,7 @@ class CEAFS(object):    #trigger action on Mach
 
         self._Press[num_element, num_element] = 0
         results = linalg.solve( self._Press, rhs )
-                           
+
         dlnVqdlnP = -1 + results[num_element]  
 
         #rhs for Cp constant T
@@ -139,7 +139,8 @@ class CEAFS(object):    #trigger action on Mach
         self._Temp[num_element, num_element] = 0
         results = linalg.solve( self._Temp, rhs )
 
-        dlnVqdlnT = 1 + results[num_element]
+
+        dlnVqdlnT = 1 - results[num_element]
 
         Cpf = np.sum(nj*self.Cp0(T))
 
@@ -224,8 +225,6 @@ class CEAFS(object):    #trigger action on Mach
         rhs[num_element] = nmoles - sum_nj + sum_nj_muj
 
         #solve it
-        #print "  ", chmatrix
-        #print "    ", rhs
         results = linalg.solve( chmatrix, rhs )
         
         #determine lamdba eqns 3.1, 3.2, amd 3.3
