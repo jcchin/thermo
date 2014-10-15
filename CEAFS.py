@@ -199,14 +199,19 @@ class CEAFS(object):    #trigger action on Mach
         #and rhs of 2.64
         
         #determine the delta coeff for 2.24 and pi coef for 2.26\
-        for i in range( 0, num_element ):
-            chmatrix[num_element][i]=bsubi[i]
-            chmatrix[i][num_element]=bsubi[i]
-            tmatrix[num_element][i] =bsubi[i]
-            tmatrix[i][num_element] =bsubi[i]
-            pmatrix[num_element][i] =bsubi[i]
-            pmatrix[i][num_element] =bsubi[i]    
-
+        # for i in range( 0, num_element ):
+        #     chmatrix[num_element][i]=bsubi[i]
+        #     chmatrix[i][num_element]=bsubi[i]
+        #     tmatrix[num_element][i] =bsubi[i]
+        #     tmatrix[i][num_element] =bsubi[i]
+        #     pmatrix[num_element][i] =bsubi[i]
+        #     pmatrix[i][num_element] =bsubi[i]    
+        chmatrix[num_element,:-1]=bsubi
+        chmatrix[:-1,num_element]=bsubi
+        tmatrix[num_element,:-1] =bsubi
+        tmatrix[:-1,num_element] =bsubi
+        pmatrix[num_element,:-1] =bsubi
+        pmatrix[:-1,num_element] =bsubi
 
         #determine delta n coef for eq 2.26
         sum_nj = np.sum(nj)
