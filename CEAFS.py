@@ -35,7 +35,7 @@ class CEAFS(object):    #trigger action on Mach
 
     def __init__(self): 
 
-        self._nj = empty(self._num_react, dtype='complex')
+        self._n = empty(self._num_react+1, dtype='complex')
 
         self._muj= zeros(self._num_react, dtype='complex')     
 
@@ -47,7 +47,7 @@ class CEAFS(object):    #trigger action on Mach
 
         self._results = np.zeros(self._num_element + 1, dtype='complex')
 
-        self._nmoles = .1
+        
 
         self._bsubi = np.zeros(self._num_element, dtype='complex')
         self._bsub0 = np.zeros(self._num_element, dtype='complex')
@@ -77,10 +77,11 @@ class CEAFS(object):    #trigger action on Mach
         num_element = self._num_element
         bsub0 = self._bsub0
 
-        nj = self._nj
+        nj = self._n[:-1]
         muj = self._muj
 
         nj[:] = [0.,1.,0.] #initial reactant mixture assumes all CO2
+        self._n[-1] = .1 #initial MW weight
 
         #deterine bsub0 - compute the distribution of elements from the distribution of reactants
         for i in range( 0, num_element ):
@@ -93,7 +94,7 @@ class CEAFS(object):    #trigger action on Mach
 
     def set_total_TP(self, T, P ):
 
-        nj = self._nj
+        nj = self._n[:-1]
         num_element = self._num_element
         num_react = self._num_react
         results = self._results
@@ -108,14 +109,15 @@ class CEAFS(object):    #trigger action on Mach
         count = 0    
         while count < 20:
             count = count + 1
-            self._nj += self._resid_TP(self._nj)
+            R = self._resid_TP(self._n)
+            self._n += R
 
         sum_nj = np.sum(nj)
 
 
         #rhs for Cp constant p 
         rhs[:num_element] = self._bsubi
-        rhs[num_element] = np.sum(self._nj)
+        rhs[num_element] = np.sum(nj)
 
         self._Press[num_element, num_element] = 0
         results = linalg.solve( self._Press, rhs )
@@ -151,10 +153,8 @@ class CEAFS(object):    #trigger action on Mach
         Cpe += np.sum(nj*H0_T*results[num_element])
 
         self.Cp = (Cpe+Cpf)*1.987
-        self.Cv = self.Cp + self._nmoles*1.987*dlnVqdlnT**2/dlnVqdlnP
+        self.Cv = self.Cp + self._n[-1]*1.987*dlnVqdlnT**2/dlnVqdlnP
         self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
-
-        print self.Cv, self._nmoles
 
         return nj/sum_nj
 
@@ -176,7 +176,9 @@ class CEAFS(object):    #trigger action on Mach
         dLn = self._dLn
 
         muj = self._muj
-        nj = nj_guess.copy()
+        n = nj_guess.copy()
+        nj= n[:-1]
+        nmoles = n[-1]
         
         #calculate mu for each reactant
         muj = self.H0(self.T) - self.S0(self.T) + np.log(nj) + np.log(self.P/nmoles) #pressure in Bars
@@ -245,7 +247,7 @@ class CEAFS(object):    #trigger action on Mach
             lambdaf = 1 
 
         #update total moles eq 3.4
-        self._nmoles = exp( np.log( nmoles ) + lambdaf*results[num_element] )
+        new_nmoles = exp( np.log( nmoles ) + lambdaf*results[num_element] )
 
         #update each reactant moles eq 3.4 and 2.18
         for j in range( 0, num_react ):
@@ -256,7 +258,7 @@ class CEAFS(object):    #trigger action on Mach
             nj[j]= exp( np.log( nj[j] ) + lambdaf*dLn[j] )
 
         #return nj/np.sum(nj)
-        return nj-nj_guess
+        return np.hstack((nj-nj_guess[:-1], new_nmoles-nmoles))
         #return nj
 
                 

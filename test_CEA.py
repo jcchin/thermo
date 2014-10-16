@@ -10,7 +10,7 @@ T_base = 4000
 
 baseline = CEA.set_total_TP( T_base, P_base ) #kelvin, bars
 
-print CEA._nj.real/np.sum(CEA._nj.real)
+print CEA._n[:-1].real/np.sum(CEA._n[:-1].real)
 print CEA.Cp.real
 print CEA.gamma.real
 exit()
