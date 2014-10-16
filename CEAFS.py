@@ -110,7 +110,7 @@ class CEAFS(object):    #trigger action on Mach
         while count < 20:
             count = count + 1
             R = self._resid_TP(self._n)
-            self._n += R
+            self._n *= R
 
         sum_nj = np.sum(nj)
 
@@ -238,17 +238,17 @@ class CEAFS(object):    #trigger action on Mach
             lambdaf = 1 
 
         #update total moles eq 3.4
-        new_nmoles = nmoles*exp(lambdaf*results[-1])
+        new_nmoles = exp(lambdaf*results[-1])
         #update each reactant moles eq 3.4 and 2.18
         for j in range( 0, num_react ):
             sum_aij_pi = np.sum(self.aij[:,j]*results[:-1])
             dLn[j] = results[num_element]+sum_aij_pi-muj[j]
-            nj[j] = nj[j]*exp(lambdaf*dLn[j])
+            nj[j] = exp(lambdaf*dLn[j])
 
         #return nj/np.sum(nj)
         print nj, new_nmoles
-        return np.hstack((nj-nj_guess[:-1], new_nmoles-nmoles))
-        return np.hstack((nj,nmoles))
+        #return np.hstack((nj-nj_guess[:-1], new_nmoles-nmoles))
+        return np.hstack((nj,new_moles))
         #return nj
 
                 
