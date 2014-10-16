@@ -242,16 +242,16 @@ class CEAFS(object):    #trigger action on Mach
             lambdaf = 1 
 
         #update total moles eq 3.4
-        new_nmoles = exp(lambdaf*results[-1])
+        n[-1] = results[-1]
         #update each reactant moles eq 3.4 and 2.18
         for j in range( 0, num_react ):
             sum_aij_pi = np.sum(self.aij[:,j]*results[:-1])
             dLn[j] = results[num_element]+sum_aij_pi-muj[j]
-            nj[j] = exp(lambdaf*dLn[j])
+            n[j] = dLn[j]
 
         #return nj/np.sum(nj)
 
-        return np.hstack((nj,new_nmoles))
+        return n
         #return nj
 
                 
