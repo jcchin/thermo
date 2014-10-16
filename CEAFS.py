@@ -115,10 +115,8 @@ class CEAFS(object):    #trigger action on Mach
             
             #determine lamdba eqns 3.1, 3.2, amd 3.3
             R_max = abs( 5*R[-1] )
-            for j in range( 0, num_react ):
-                # if abs( dLn[j] ) > max:
-                #     max = abs( dLn[j] )
-                R_max = max(R_max, abs(R[j]))
+            R_max = max(R_max, np.max(np.abs(R)))
+
             lambdaf = 2 / (R_max+1e-20)
             if ( lambdaf > 1 ):
                 lambdaf = 1 
