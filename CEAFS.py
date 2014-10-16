@@ -200,14 +200,7 @@ class CEAFS(object):    #trigger action on Mach
         #and pi coef for 2.26,  dpi/dlnT for 2.58, and dpi/dlnP for 2.66
         #and rhs of 2.64
         
-        #determine the delta coeff for 2.24 and pi coef for 2.26\
-        # for i in range( 0, num_element ):
-        #     chmatrix[num_element][i]=bsubi[i]
-        #     chmatrix[i][num_element]=bsubi[i]
-        #     tmatrix[num_element][i] =bsubi[i]
-        #     tmatrix[i][num_element] =bsubi[i]
-        #     pmatrix[num_element][i] =bsubi[i]
-        #     pmatrix[i][num_element] =bsubi[i]    
+        #determine the delta coeff for 2.24 and pi coef for 2.26\  
         chmatrix[num_element,:-1]=bsubi
         chmatrix[:-1,num_element]=bsubi
         tmatrix[num_element,:-1] =bsubi
@@ -235,9 +228,7 @@ class CEAFS(object):    #trigger action on Mach
         max = abs( 5*results[num_element] )
         
         for j in range( 0, num_react ):
-            sum_aij_pi = 0
-            for i in range( 0, num_element ):
-                sum_aij_pi = sum_aij_pi+self.aij[i][j] * results[i]
+            sum_aij_pi = np.sum(self.aij[:,j]*results[:-1])
             dLn[j] = results[num_element]+sum_aij_pi-muj[j]
             if abs( dLn[j] ) > max:
                 max = abs( dLn[j] )
@@ -247,18 +238,17 @@ class CEAFS(object):    #trigger action on Mach
             lambdaf = 1 
 
         #update total moles eq 3.4
-        new_nmoles = exp( np.log( nmoles ) + lambdaf*results[num_element] )
-
+        new_nmoles = nmoles*exp(lambdaf*results[-1])
         #update each reactant moles eq 3.4 and 2.18
         for j in range( 0, num_react ):
-            sum_aij_pi = 0
-            for i in range( 0, num_element ):
-                sum_aij_pi = sum_aij_pi+self.aij[i][j] * results[i]
+            sum_aij_pi = np.sum(self.aij[:,j]*results[:-1])
             dLn[j] = results[num_element]+sum_aij_pi-muj[j]
-            nj[j]= exp( np.log( nj[j] ) + lambdaf*dLn[j] )
+            nj[j] = nj[j]*exp(lambdaf*dLn[j])
 
         #return nj/np.sum(nj)
+        print nj, new_nmoles
         return np.hstack((nj-nj_guess[:-1], new_nmoles-nmoles))
+        return np.hstack((nj,nmoles))
         #return nj
 
                 
