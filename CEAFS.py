@@ -109,12 +109,23 @@ class CEAFS(object):    #trigger action on Mach
         count = 0   
         tol = 1e-4 
         R = 1000 #initial R so it enters the loop
-        while np.linalg.norm(R-1) > tol or count < 100:
+        while np.linalg.norm(R) > tol and count < 100:
             count = count + 1
             R = self._resid_TP(self._n)
+            
+            #determine lamdba eqns 3.1, 3.2, amd 3.3
+            R_max = abs( 5*R[-1] )
+            for j in range( 0, num_react ):
+                # if abs( dLn[j] ) > max:
+                #     max = abs( dLn[j] )
+                R_max = max(R_max, abs(R[j]))
+            lambdaf = 2 / (R_max+1e-20)
+            if ( lambdaf > 1 ):
+                lambdaf = 1 
 
+            print lambdaf, count
 
-            self._n *= R
+            self._n *= exp(lambdaf*R)
 
         sum_nj = np.sum(nj)
 
@@ -227,20 +238,7 @@ class CEAFS(object):    #trigger action on Mach
 
         #solve it
         results = linalg.solve( chmatrix, rhs )
-        
-        #determine lamdba eqns 3.1, 3.2, amd 3.3
-        max = abs( 5*results[num_element] )
-        
-        for j in range( 0, num_react ):
-            sum_aij_pi = np.sum(self.aij[:,j]*results[:-1])
-            dLn[j] = results[num_element]+sum_aij_pi-muj[j]
-            if abs( dLn[j] ) > max:
-                max = abs( dLn[j] )
-        
-        lambdaf = 2 / (max+1e-20)
-        if ( lambdaf > 1 ):
-            lambdaf = 1 
-
+    
         #update total moles eq 3.4
         n[-1] = results[-1]
         #update each reactant moles eq 3.4 and 2.18
@@ -250,7 +248,6 @@ class CEAFS(object):    #trigger action on Mach
             n[j] = dLn[j]
 
         #return nj/np.sum(nj)
-
         return n
         #return nj
 
