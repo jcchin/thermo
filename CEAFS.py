@@ -106,10 +106,14 @@ class CEAFS(object):    #trigger action on Mach
         self.P = P
 
         #Gauss-Seidel Iteration
-        count = 0    
-        while count < 20:
+        count = 0   
+        tol = 1e-4 
+        R = 1000 #initial R so it enters the loop
+        while np.linalg.norm(R-1) > tol or count < 100:
             count = count + 1
             R = self._resid_TP(self._n)
+
+
             self._n *= R
 
         sum_nj = np.sum(nj)
@@ -246,9 +250,8 @@ class CEAFS(object):    #trigger action on Mach
             nj[j] = exp(lambdaf*dLn[j])
 
         #return nj/np.sum(nj)
-        print nj, new_nmoles
-        #return np.hstack((nj-nj_guess[:-1], new_nmoles-nmoles))
-        return np.hstack((nj,new_moles))
+
+        return np.hstack((nj,new_nmoles))
         #return nj
 
                 
