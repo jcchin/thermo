@@ -92,6 +92,7 @@ class CEAFS(object):    #trigger action on Mach
         nj[:] = ones(num_react, dtype='complex')/num_react #reset initial guess to equal concentrations
 
 
+
     def set_total_TP(self, T, P ):
 
         nj = self._n[:-1]
@@ -170,7 +171,20 @@ class CEAFS(object):    #trigger action on Mach
 
         return nj/sum_nj
 
-    def _resid_TP(self, nj_guess): 
+
+    def _n2pi(self, n_guess): 
+        """maps molar concentrations to pi coefficients matrix and a right-hand-side""" 
+        pass
+
+    def _linear_solve(self, pi_matrix, rhs): 
+        """solves a linear system which computes pi updates"""
+        pass
+
+    def _pi2n(self, pi_new): 
+        """maps pi updates to concentration updates""" 
+        pass
+
+    def _resid_TP(self, n_guess): 
 
         num_react = self._num_react
         num_element = self._num_element
@@ -188,7 +202,7 @@ class CEAFS(object):    #trigger action on Mach
         dLn = self._dLn
 
         muj = self._muj
-        n = nj_guess.copy()
+        n = n_guess.copy()
         nj= n[:-1]
         nmoles = n[-1]
         
@@ -222,7 +236,7 @@ class CEAFS(object):    #trigger action on Mach
 
         #determine delta n coef for eq 2.26
         sum_nj = np.sum(nj)
-        chmatrix[num_element][num_element] = sum_nj- nmoles
+        chmatrix[-1,-1] = sum_nj - nmoles
 
         #determine right side of matrix for eq 2.24
         for i in range( 0, num_element ):
