@@ -29,15 +29,20 @@ class CEAFS(object):    #trigger action on Mach
     element_wt = [ 12.01, 16.0 ]
     aij = np.array([ [1,1,0], [1,2,2] ])
 
+
     _num_element = 2
     _num_react = 3
 
+    #pre-computed constants used in calculations
+    _aij_prod = np.empty((_num_element,_num_element))
+    for i in range( 0, _num_element ):
+        for j in range( 0, _num_element ):
+            _aij_prod[i][j] = np.sum(aij[i]*aij[j])
+            
 
     def __init__(self): 
 
         self._n = empty(self._num_react+1, dtype='complex')
-
-        self._muj= zeros(self._num_react, dtype='complex')     
 
         self._Chem = np.zeros((self._num_element+1, self._num_element+1), dtype='complex') 
         self._Temp = np.zeros((self._num_element+1, self._num_element+1), dtype='complex') 
@@ -46,8 +51,6 @@ class CEAFS(object):    #trigger action on Mach
         self._rhs = np.zeros(self._num_element + 1, dtype='complex')
 
         self._results = np.zeros(self._num_element + 1, dtype='complex')
-
-        
 
         self._bsubi = np.zeros(self._num_element, dtype='complex')
         self._bsub0 = np.zeros(self._num_element, dtype='complex')
@@ -78,7 +81,6 @@ class CEAFS(object):    #trigger action on Mach
         bsub0 = self._bsub0
 
         nj = self._n[:-1]
-        muj = self._muj
 
         nj[:] = [0.,1.,0.] #initial reactant mixture assumes all CO2
         self._n[-1] = .1 #initial MW weight
@@ -88,7 +90,6 @@ class CEAFS(object):    #trigger action on Mach
             sum_aij_nj = np.sum(self.aij[i] * nj / self.wt_mole)
             bsub0[ i ] = sum_aij_nj    
                                
-        self._nmoles = .1 #CEA initial guess for a MW of 30 for final mixture
         nj[:] = ones(num_react, dtype='complex')/num_react #reset initial guess to equal concentrations
 
 
@@ -174,15 +175,86 @@ class CEAFS(object):    #trigger action on Mach
 
     def _n2pi(self, n_guess): 
         """maps molar concentrations to pi coefficients matrix and a right-hand-side""" 
-        pass
+        num_element = self._num_element
+
+        chmatrix = self._Chem
+        pmatrix = self._Temp
+        tmatrix = self._Press
+
+        rhs = self._rhs
+        bsub0 = self._bsub0
+        bsubi = self._bsubi
+
+        n = n_guess.copy()
+        nj= n[:-1]
+        nmoles = n[-1]
+        
+        #calculate mu for each reactant
+        nj_muj = nj*(self.H0(self.T) - self.S0(self.T) + np.log(nj) + np.log(self.P/nmoles)) #pressure in Bars
+
+        #calculate b_i for each element
+        for i in range( 0, num_element ):
+            bsubi[ i ] =  np.sum(self.aij[i]*nj) 
+
+        ##determine pi coef for 2.24, 2.56, and 2.64 for each element
+        for i in range( 0, num_element ):
+            for j in range( 0, num_element ):
+                tot = np.sum(self._aij_prod[i][j]*nj)
+                chmatrix[i][j] = tot
+                tmatrix[i][j] = tot
+                pmatrix[i][j] = tot
+
+
+        #determine the delta n coeff for 2.24, dln/dlnT coeff for 2.56, and dln/dlP coeff 2.64
+        #and pi coef for 2.26,  dpi/dlnT for 2.58, and dpi/dlnP for 2.66
+        #and rhs of 2.64
+        
+        #determine the delta coeff for 2.24 and pi coef for 2.26\  
+        chmatrix[num_element,:-1]= bsubi
+        chmatrix[:-1,num_element]= bsubi
+        tmatrix[num_element,:-1] = bsubi
+        tmatrix[:-1,num_element] = bsubi
+        pmatrix[num_element,:-1] = bsubi
+        pmatrix[:-1,num_element] = bsubi
+
+        #determine delta n coef for eq 2.26
+        sum_nj = np.sum(nj)
+        chmatrix[-1,-1] = sum_nj - nmoles
+
+        #determine right side of matrix for eq 2.24
+        for i in range( 0, num_element ):
+            sum_aij_nj_muj = np.sum(self.aij[i]*nj_muj)
+            rhs[i]=bsub0[i]-bsubi[i]+sum_aij_nj_muj
+
+        #determine the right side of the matrix for eq 2.36
+        sum_nj_muj = np.sum(nj_muj)
+        rhs[num_element] = nmoles - sum_nj + sum_nj_muj
+
+        return chmatrix, rhs
 
     def _linear_solve(self, pi_matrix, rhs): 
         """solves a linear system which computes pi updates"""
-        pass
+        
+
+        #solve it
+        results = linalg.solve( pi_matrix, rhs )
+
+        return results
+
 
     def _pi2n(self, pi_new): 
-        """maps pi updates to concentration updates""" 
-        pass
+        """maps pi updates back to concentration updates""" 
+            
+        #update total moles eq 3.4
+        n[-1] = results[-1]
+        #update each reactant moles eq 3.4 and 2.18
+        for j in range( 0, num_react ):
+            sum_aij_pi = np.sum(self.aij[:,j]*pi_new[:-1])
+            dLn[j] = pi_new[-1]+sum_aij_pi-muj[j]
+            n[j] = dLn[j]
+
+        #return nj/np.sum(nj)
+        return n
 
     def _resid_TP(self, n_guess): 
 
@@ -195,13 +267,11 @@ class CEAFS(object):    #trigger action on Mach
 
         rhs = self._rhs
         results = self._results
-        nmoles = self._nmoles
         bsub0 = self._bsub0
         bsubi = self._bsubi
 
         dLn = self._dLn
 
-        muj = self._muj
         n = n_guess.copy()
         nj= n[:-1]
         nmoles = n[-1]
@@ -227,12 +297,12 @@ class CEAFS(object):    #trigger action on Mach
         #and rhs of 2.64
         
         #determine the delta coeff for 2.24 and pi coef for 2.26\  
-        chmatrix[num_element,:-1]=bsubi
-        chmatrix[:-1,num_element]=bsubi
-        tmatrix[num_element,:-1] =bsubi
-        tmatrix[:-1,num_element] =bsubi
-        pmatrix[num_element,:-1] =bsubi
-        pmatrix[:-1,num_element] =bsubi
+        chmatrix[num_element,:-1]= bsubi
+        chmatrix[:-1,num_element]= bsubi
+        tmatrix[num_element,:-1] = bsubi
+        tmatrix[:-1,num_element] = bsubi
+        pmatrix[num_element,:-1] = bsubi
+        pmatrix[:-1,num_element] = bsubi
 
         #determine delta n coef for eq 2.26
         sum_nj = np.sum(nj)
