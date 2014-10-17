@@ -34,10 +34,10 @@ class CEAFS(object):    #trigger action on Mach
     _num_react = 3
 
     #pre-computed constants used in calculations
-    _aij_prod = np.empty((_num_element,_num_element))
+    _aij_prod = np.empty((_num_element,_num_element, _num_react))
     for i in range( 0, _num_element ):
         for j in range( 0, _num_element ):
-            _aij_prod[i][j] = np.sum(aij[i]*aij[j])
+            _aij_prod[i][j] = aij[i]*aij[j]
             
 
     def __init__(self): 
@@ -106,7 +106,7 @@ class CEAFS(object):    #trigger action on Mach
         self.T = T
         self.P = P
 
-        #Gauss-Seidel Iteration
+        #Gauss-Seidel Iteration to find equilibrium concentrations
         count = 0   
         tol = 1e-4 
         R = 1000 #initial R so it enters the loop
@@ -123,6 +123,8 @@ class CEAFS(object):    #trigger action on Mach
                 lambdaf = 1 
 
             self._n *= exp(lambdaf*R)
+
+        #iteration complete
 
         sum_nj = np.sum(nj)
 
@@ -160,9 +162,13 @@ class CEAFS(object):    #trigger action on Mach
         Cpe = 0 
         for i in range( 0, num_element ):
             sum_aijnjhj = np.sum(self.aij[i]*nj*H0_T)
-            Cpe += sum_aijnjhj*results[i]
-        Cpe += np.sum(nj**2*H0_T**2)
-        Cpe += np.sum(nj*H0_T*results[num_element])
+            Cpe -= sum_aijnjhj*results[i]
+        Cpe += np.sum(nj*H0_T**2)
+        # Cpe += np.sum(nj*H0_T*results[num_element])
+
+        
+        #for j in range( 0, num_react ):
+            #Cpe = Cpe + nj[j]*self.H0(T,j)*resultst
 
         self.Cp = (Cpe+Cpf)*1.987
         self.Cv = self.Cp + self._n[-1]*1.987*dlnVqdlnT**2/dlnVqdlnP
@@ -199,11 +205,10 @@ class CEAFS(object):    #trigger action on Mach
         ##determine pi coef for 2.24, 2.56, and 2.64 for each element
         for i in range( 0, num_element ):
             for j in range( 0, num_element ):
-                tot = np.sum(self.aij[i]*self.aij[j]*nj)
+                tot = np.sum(self._aij_prod[i][j]*nj)
                 chmatrix[i][j] = tot
                 tmatrix[i][j] = tot
                 pmatrix[i][j] = tot
-
 
         #determine the delta n coeff for 2.24, dln/dlnT coeff for 2.56, and dln/dlP coeff 2.64
         #and pi coef for 2.26,  dpi/dlnT for 2.58, and dpi/dlnP for 2.66
@@ -232,15 +237,6 @@ class CEAFS(object):    #trigger action on Mach
 
         return chmatrix, rhs, muj
 
-    def _linear_solve(self, pi_matrix, rhs): 
-        """solves a linear system which computes pi updates"""
-        
-
-        #solve it
-        results = linalg.solve( pi_matrix, rhs )
-
-        return results
-
 
     def _pi2n(self, pi_update, muj): 
         """maps pi updates back to concentration updates""" 
@@ -259,12 +255,8 @@ class CEAFS(object):    #trigger action on Mach
 
     def _resid_TP(self, n_guess): 
 
-        num_react = self._num_react
         chmatrix, rhs, muj = self._n2pi(n_guess)
-
-        #solve it
         pi_update = linalg.solve( chmatrix, rhs )
-        
         n = self._pi2n(pi_update, muj)
 
         return n
