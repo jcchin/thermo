@@ -167,7 +167,6 @@ class CEAFS(object):    #trigger action on Mach
         self.Cv = self.Cp + self._n[-1]*1.987*dlnVqdlnT**2/dlnVqdlnP
         self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
 
-        print "foobar"
 
         return nj/sum_nj
 
