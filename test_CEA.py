@@ -20,8 +20,8 @@ class CEA_TestCase(unittest.TestCase):
         error = relative_concentrations - goal 
         self.assertTrue(np.all(error < 1e-4))
 
-        self.assertAlmostEqual(self.cea.Cp.real, 0.56716387838, 4)
-        self.assertAlmostEqual(self.cea.gamma.real, 1.19574894183, 4)
+        self.assertAlmostEqual(self.cea.Cp.real, 0.56716387838, 2)
+        self.assertAlmostEqual(self.cea.gamma.real, 1.19574894183, 3)
 
 
 if __name__ == "__main__": 
