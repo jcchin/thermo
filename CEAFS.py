@@ -121,8 +121,6 @@ class CEAFS(object):    #trigger action on Mach
             if ( lambdaf > 1 ):
                 lambdaf = 1 
 
-            print lambdaf, count
-
             self._n *= exp(lambdaf*R)
 
         sum_nj = np.sum(nj)
@@ -168,6 +166,8 @@ class CEAFS(object):    #trigger action on Mach
         self.Cp = (Cpe+Cpf)*1.987
         self.Cv = self.Cp + self._n[-1]*1.987*dlnVqdlnT**2/dlnVqdlnP
         self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
+
+        print "foobar"
 
         return nj/sum_nj
 
