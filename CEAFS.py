@@ -59,7 +59,7 @@ class CEAFS(object):    #trigger action on Mach
         self.T = 0 #Kelvin
         self.P = 0 #Bar
 
-        
+    
     def H0( self, T ):
         ai = self.a.T
         return (-ai[0]/T**2 + ai[1]/T*np.log(T) + ai[2] + ai[3]*T/2 + ai[4]*T**2/3 + ai[5]*T**3/4 + ai[6]*T**4/5+ai[7]/T)
@@ -250,7 +250,6 @@ class CEAFS(object):    #trigger action on Mach
             sum_aij_pi = np.sum(self.aij[:,j]*pi_update[:-1])
             n[j] = pi_update[-1]+sum_aij_pi-muj[j]
 
-        #return nj/np.sum(nj)
         return n
 
     def _resid_TP(self, n_guess): 
@@ -260,6 +259,15 @@ class CEAFS(object):    #trigger action on Mach
         n = self._pi2n(pi_update, muj)
 
         return n
+
+
+if __name__ == "__main__": 
+
+    c = CEAFS()
+
+    c.set_total_TP( 4000, 1.034210 ) #kelvin, bar
+
+
 
                 
 
