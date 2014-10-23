@@ -260,6 +260,19 @@ class CEAFS(object):    #trigger action on Mach
 
         return n
 
+    def _pi2n_applyJ(self, pi_update, muj):
+        
+        num_element = self._num_element
+        num_react = self._num_react
+
+        result = np.empty((num_react+1,))
+
+        for i in xrange(num_react):
+            result[i] = np.sum(self.aij[:,i]*pi_update[:num_element]) + pi_update[num_element] - muj[i]
+        
+        result[-1] = pi_update[-1];    
+
+        return result
 
 if __name__ == "__main__": 
 
@@ -267,13 +280,6 @@ if __name__ == "__main__":
 
     c.set_total_TP( 4000, 1.034210 ) #kelvin, bar
 
-
-
-                
-
-
-               
-                
                 
                 
             
