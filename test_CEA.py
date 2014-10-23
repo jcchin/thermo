@@ -35,6 +35,43 @@ class CEA_TestCase(unittest.TestCase):
         self.assertAlmostEqual(self.cea.Cp.real, 0.32649940109638081, 2)
         self.assertAlmostEqual(self.cea.gamma.real, 1.1614472804210347, 3)
 
+class Deriv_Tests(unittest.TestCase):
+    def setUp(self): 
+        self.cea = CEAFS(); 
+
+    def test_pi2n_applyJ(self):
+
+        base_pi = [ -1.77208405e+01,  -1.63009204e+01,  -1.34226676e-09,] 
+        base_muj =[-34.02175706, -50.32264785, -32.60178159,]
+
+
+        base_n = self.cea._pi2n(base_pi,base_muj)
+
+        print "basen", base_n
+
+        for i in xrange (len(base_pi)):
+            # inaccurate fd
+            # delta = list(base_pi)
+            # delta[i] *= 1.0001
+            # new_n = (self.cea._pi2n(delta,base_muj)-base_n).real
+            # fd = (new_n/(delta[i]-base_pi[i]))
+
+            delta = list(base_pi)
+            delta[i] += .01j
+            cs = (self.cea._pi2n(delta,base_muj)-base_n).imag/.01
+
+            vec_pi = np.zeros(len(base_pi))
+            vec_pi[i] = 1
+            vec_muj = np.zeros(len(base_muj))
+
+            analytic = self.cea._pi2n_applyJ(vec_pi,vec_muj).real
+            error = abs(analytic-cs)
+            self.assertTrue(np.all(error < 1e-5))
+
+
+
+
+
 
 if __name__ == "__main__": 
     unittest.main()
