@@ -19,9 +19,15 @@ class CEA_TestCase(unittest.TestCase):
         goal = np.array([0.61976,0.07037,0.30988])
         error = relative_concentrations - goal 
         self.assertTrue(np.all(error < 1e-4))
+        print self.cea.h.real
+        print self.cea.s.real
+        print self.cea.rho.real
 
         self.assertAlmostEqual(self.cea.Cp.real, 0.55868412681771595, 2)
         self.assertAlmostEqual(self.cea.gamma.real, 1.1997550763532066, 3)
+        self.assertAlmostEqual(self.cea.h.real, 340.20, 2)
+        self.assertAlmostEqual(self.cea.s.real, 2.3576, 3)
+        self.assertAlmostEqual(self.cea.rho.real, 9.4447-5, 3)
 
     def test_1500K(self): 
 
@@ -34,7 +40,10 @@ class CEA_TestCase(unittest.TestCase):
 
         self.assertAlmostEqual(self.cea.Cp.real, 0.32649940109638081, 2)
         self.assertAlmostEqual(self.cea.gamma.real, 1.1614472804210347, 3)
-
+        self.assertAlmostEqual(self.cea.h.real, -1801.38, 2)
+        self.assertAlmostEqual(self.cea.s.real, 1.5857, 3)
+        self.assertAlmostEqual(self.cea.rho.real, 3.6488-4, 3)
+        
 class Deriv_Tests(unittest.TestCase):
     def setUp(self): 
         self.cea = CEAFS(); 
