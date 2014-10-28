@@ -53,6 +53,7 @@ class Deriv_Tests(unittest.TestCase):
 
         base_n = self.cea._pi2n(base_pi,base_muj)
 
+        #check pi inputs
         for i in xrange (len(base_pi)):
             # inaccurate fd
             # delta = list(base_pi)
@@ -62,30 +63,58 @@ class Deriv_Tests(unittest.TestCase):
 
             delta = list(base_pi)
             delta[i] += .01j
-            cs = (self.cea._pi2n(delta,base_muj)-base_n).imag/.01
+            cs = self.cea._pi2n(delta,base_muj).imag/.01
 
             vec_pi = np.zeros(len(base_pi))
             vec_pi[i] = 1
             vec_muj = np.zeros(len(base_muj))
 
             analytic = self.cea._pi2n_applyJ(vec_pi,vec_muj).real
-            error = abs(analytic-cs)
+            error = np.abs(analytic-cs)
             self.assertTrue(np.all(error < 1e-5))
 
+        #check muj input
         for i in xrange (len(base_muj)):
 
             delta = list(base_muj)
             delta[i] += .01j
-            cs = (self.cea._pi2n(base_pi,delta)-base_n).imag/.01
+            cs = self.cea._pi2n(base_pi,delta).imag/.01
 
             vec_muj = np.zeros(len(base_muj))
             vec_muj[i] = 1
             vec_pi = np.zeros(len(base_pi))
 
             analytic = self.cea._pi2n_applyJ(vec_pi,vec_muj).real
-            error = abs(analytic-cs)
+            error = np.abs(analytic-cs)
             self.assertTrue(np.all(error < 1e-5))
 
+
+    def test_n2pi_applyJ(self): 
+
+        self.cea.set_total_TP( 1500, 1.034210 ) #kelvin, bars 
+        base_n = np.array([7.94249751e-06, 2.27142886e-02, 4.29623938e-06, 2.27260187e-02], dtype='complex')
+        base_chmatrix, base_pi, base_muj = self.cea._n2pi(base_n)
+
+        #dmuj_dn
+        for i in xrange(base_n.shape[0]): 
+            
+            delta = base_n.copy()
+            delta[i] += complex(0,1e-15) #why the heck do I need such a small step size here? 
+            new_chmatrix, new_pi, new_muj = self.cea._n2pi(delta)
+            cs_muj = new_muj.imag/1e-15
+
+            #cs is giving weird results, so use FD as sanity check here
+            # delta = base_n.copy()
+            # delta[i] *= 1.001
+            # new_chmatrix, new_pi, new_muj = self.cea._n2pi(delta)
+            # fd_muj = (new_muj-base_muj).real/(base_n[i]*.001)
+
+            vec_n = np.zeros(base_n.shape)
+            vec_n[i] = 1
+            a_chmatrix, a_pi, a_muj = self.cea._n2pi_applyJ(vec_n)
+
+            error = np.abs(a_muj.real-cs_muj)
+            self.assertTrue(np.all(error < 1e-3))
 
 
 if __name__ == "__main__": 

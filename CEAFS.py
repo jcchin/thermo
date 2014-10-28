@@ -373,11 +373,10 @@ class CEAFS(object):    #trigger action on Mach
         num_element = self._num_element
         num_react = self._num_react
 
-        result = np.empty((num_element+1,))
 
-        intermed = n_guess[-1]/self._n[-1]
-        for i in xrange(num_react):
-            result[i] = n_guess[i]/self._n[i] - itermed
+        result_muj = n_guess[:-1]/self._n[:-1] - n_guess[-1]/self._n[-1]
+
+        return None, None, result_muj
 
 
 if __name__ == "__main__": 
