@@ -22,6 +22,9 @@ class CEA_TestCase(unittest.TestCase):
 
         self.assertAlmostEqual(self.cea.Cp.real, 0.55868412681771595, 2)
         self.assertAlmostEqual(self.cea.gamma.real, 1.1997550763532066, 3)
+        self.assertAlmostEqual(self.cea.h.real, 340.3269, 2)
+        self.assertAlmostEqual(self.cea.s.real, 2.3576, 3)
+        self.assertAlmostEqual(self.cea.rho.real, 9.4447e-5, 3)
 
     def test_1500K(self): 
 
@@ -34,7 +37,10 @@ class CEA_TestCase(unittest.TestCase):
 
         self.assertAlmostEqual(self.cea.Cp.real, 0.32649940109638081, 2)
         self.assertAlmostEqual(self.cea.gamma.real, 1.1614472804210347, 3)
-
+        self.assertAlmostEqual(self.cea.h.real, -1801.3894, 2)
+        self.assertAlmostEqual(self.cea.s.real, 1.5857, 3)
+        self.assertAlmostEqual(self.cea.rho.real, 3.6488e-4, 3)
+        
 class Deriv_Tests(unittest.TestCase):
     def setUp(self): 
         self.cea = CEAFS(); 
@@ -46,8 +52,6 @@ class Deriv_Tests(unittest.TestCase):
 
 
         base_n = self.cea._pi2n(base_pi,base_muj)
-
-        #print "basen", base_n
 
         for i in xrange (len(base_pi)):
             # inaccurate fd
@@ -63,6 +67,21 @@ class Deriv_Tests(unittest.TestCase):
             vec_pi = np.zeros(len(base_pi))
             vec_pi[i] = 1
             vec_muj = np.zeros(len(base_muj))
+
+            analytic = self.cea._pi2n_applyJ(vec_pi,vec_muj).real
+            error = abs(analytic-cs)
+            self.assertTrue(np.all(error < 1e-5))
+
+
+        for i in xrange (len(base_muj)):
+
+            delta = list(base_muj)
+            delta[i] += .01j
+            cs = (self.cea._pi2n(base_pi,delta)-base_n).imag/.01
+
+            vec_muj = np.zeros(len(base_muj))
+            vec_muj[i] = 1
+            vec_pi = np.zeros(len(base_pi))
 
             analytic = self.cea._pi2n_applyJ(vec_pi,vec_muj).real
             error = abs(analytic-cs)

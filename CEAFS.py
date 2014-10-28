@@ -55,10 +55,15 @@ class CEAFS(object):    #trigger action on Mach
         self._bsubi = np.zeros(self._num_element, dtype='complex')
         self._bsub0 = np.zeros(self._num_element, dtype='complex')
 
-
+        self._Chem_hP = np.zeros((self._num_element+2, self._num_element+2), dtype='complex') 
+        self._rhs_hP = np.zeros(self._num_element + 2, dtype='complex')        
+        
+        
         self.T = 0 #Kelvin
         self.P = 0 #Bar
-
+        self.h = 0 #CAL/G
+        self.s = 0 #CAL/(G)(K)
+        self.rho = 0 #G/CC
     
     def H0( self, T ):
         ai = self.a.T
@@ -169,15 +174,103 @@ class CEAFS(object):    #trigger action on Mach
         
         #for j in range( 0, num_react ):
             #Cpe = Cpe + nj[j]*self.H0(T,j)*resultst
+        self.h = np.sum(nj*H0_T*8314.51/4184.*T)
+        self.s = np.sum (nj*(self.S0( T )*8314.51/4184. -8314.51/4184.*log( nj/sum_nj)-8314.51/4184.*log( P )))
+        self.Cp = (Cpe+Cpf)*1.987
+        self.Cv = self.Cp + self._n[-1]*1.987*dlnVqdlnT**2/dlnVqdlnP
+        self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
+        MM = np.sum(nj*self.wt_mole)
+        self.rho = (P*MM)/(8.31451*T )
 
+        return nj/sum_nj
+
+    def set_totalhP(self, h, P ):
+
+        nj = self._n[:-1]
+        num_element = self._num_element
+        num_react = self._num_react
+        results = self._results
+        rhs = self._rhs
+
+        self._eq_init()
+
+        self.h = h
+        self.P = P
+
+        #Gauss-Seidel Iteration to find equilibrium concentrations
+        count = 0   
+        tol = 1e-4 
+        R = 1000 #initial R so it enters the loop
+        while np.linalg.norm(R) > tol and count < 100:
+            count = count + 1
+            R = self._resid_TP(self._n)
+            
+            #determine lamdba eqns 3.1, 3.2, amd 3.3
+            R_max = abs( 5*R[-1] )
+            R_max = max(R_max, np.max(np.abs(R)))
+
+            lambdaf = 2 / (R_max+1e-20)
+            if ( lambdaf > 1 ):
+                lambdaf = 1 
+
+            self._n *= exp(lambdaf*R)
+
+        #iteration complete
+
+        sum_nj = np.sum(nj)
+
+
+        #rhs for Cp constant p 
+        rhs[:num_element] = self._bsubi
+        rhs[num_element] = np.sum(nj)
+
+        self._Press[num_element, num_element] = 0
+        results = linalg.solve( self._Press, rhs )
+
+        dlnVqdlnP = -1 + results[num_element]  
+
+        #rhs for Cp constant T
+        H0_T = self.H0(T) #compute this once, and use it a bunch of times
+
+        #determinerhs 2.56
+        for i in range( 0, num_element ):
+            sum_aij_nj_Hj = np.sum(self.aij[i]*nj*H0_T)
+            rhs[i]=sum_aij_nj_Hj
+
+
+        #determinerhs 2.58
+        sum_nj_Hj = np.sum(nj*H0_T)
+        rhs[num_element]=sum_nj_Hj
+
+        self._Temp[num_element, num_element] = 0
+        results = linalg.solve( self._Temp, rhs )
+
+
+        dlnVqdlnT = 1 - results[num_element]
+
+        Cpf = np.sum(nj*self.Cp0(T))
+
+        Cpe = 0 
+        for i in range( 0, num_element ):
+            sum_aijnjhj = np.sum(self.aij[i]*nj*H0_T)
+            Cpe -= sum_aijnjhj*results[i]
+        Cpe += np.sum(nj*H0_T**2)
+        # Cpe += np.sum(nj*H0_T*results[num_element])
+
+        
+        #for j in range( 0, num_react ):
+            #Cpe = Cpe + nj[j]*self.H0(T,j)*resultst
+
+        self.h = np.sum(nj[i]*self.H0( T, i )*8314.51/4184.*T)
+        self.s =np.sum (nj[i]*(self.S0( T, i )*8314.51/4184. -8314.51/4184.*log( nj[i]/nmoles)-8314.51/4184.*log( P )))
+     
         self.Cp = (Cpe+Cpf)*1.987
         self.Cv = self.Cp + self._n[-1]*1.987*dlnVqdlnT**2/dlnVqdlnP
         self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
 
 
         return nj/sum_nj
-
-
+        
     def _n2pi(self, n_guess): 
         """maps molar concentrations to pi coefficients matrix and a right-hand-side""" 
         num_react = self._num_react
@@ -209,7 +302,8 @@ class CEAFS(object):    #trigger action on Mach
                 chmatrix[i][j] = tot
                 tmatrix[i][j] = tot
                 pmatrix[i][j] = tot
-
+                
+                
         #determine the delta n coeff for 2.24, dln/dlnT coeff for 2.56, and dln/dlP coeff 2.64
         #and pi coef for 2.26,  dpi/dlnT for 2.58, and dpi/dlnP for 2.66
         #and rhs of 2.64
