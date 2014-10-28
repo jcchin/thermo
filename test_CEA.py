@@ -72,8 +72,19 @@ class Deriv_Tests(unittest.TestCase):
             error = abs(analytic-cs)
             self.assertTrue(np.all(error < 1e-5))
 
+        for i in xrange (len(base_muj)):
 
+            delta = list(base_muj)
+            delta[i] += .01j
+            cs = (self.cea._pi2n(base_pi,delta)-base_n).imag/.01
 
+            vec_muj = np.zeros(len(base_muj))
+            vec_muj[i] = 1
+            vec_pi = np.zeros(len(base_pi))
+
+            analytic = self.cea._pi2n_applyJ(vec_pi,vec_muj).real
+            error = abs(analytic-cs)
+            self.assertTrue(np.all(error < 1e-5))
 
 
 

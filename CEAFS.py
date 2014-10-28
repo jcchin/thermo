@@ -304,8 +304,6 @@ class CEAFS(object):    #trigger action on Mach
                 pmatrix[i][j] = tot
                 
                 
-
-
         #determine the delta n coeff for 2.24, dln/dlnT coeff for 2.56, and dln/dlP coeff 2.64
         #and pi coef for 2.26,  dpi/dlnT for 2.58, and dpi/dlnP for 2.66
         #and rhs of 2.64
