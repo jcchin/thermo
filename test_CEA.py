@@ -47,7 +47,7 @@ class Deriv_Tests(unittest.TestCase):
 
         base_n = self.cea._pi2n(base_pi,base_muj)
 
-        print "basen", base_n
+        #print "basen", base_n
 
         for i in xrange (len(base_pi)):
             # inaccurate fd
@@ -68,8 +68,23 @@ class Deriv_Tests(unittest.TestCase):
             error = abs(analytic-cs)
             self.assertTrue(np.all(error < 1e-5))
 
+    def test_n2pi_applyL(self):
 
+        base_n_guess = [ 0.02040748+0.j,  0.00231478+0.j,  0.01020431+0.j,  0.03292581+0.j]
+        
+        base_chmatrix, base_rhs, base_muj = self.cea._n2pi(base_n_guess)
 
+        delta_n_guess = np.copy(base_n_guess)
+        delta_n_guess[0] += .01j
+
+        pert_chmatrix, pert_rhs, pert_muj = self.cea._n2pi(delta_n_guess)
+
+        #print (pert_chmatrix[0][0] - base_chmatrix[0][0]).imag/.01
+        print 30*"-"
+        print base_muj
+        print pert_muj
+        print "!!!", (pert_muj - base_muj).imag/.01
+        self.assertTrue(True)
 
 
 
