@@ -376,7 +376,11 @@ class CEAFS(object):    #trigger action on Mach
         epsilon = 1e-90 #numerical offset to handle concentrations going to zero
         result_muj = n_guess[:-1]/(self._n[:-1]+epsilon) - n_guess[-1]/(self._n[-1]+epsilon)
 
-        return None, None, result_muj
+        results_pi = np.zeros((num_element+1), dtype="complex")
+        results_chmatrix = np.zeros((num_element+1, num_element+1), dtype="complex")
+
+
+        return results_chmatrix, results_pi, result_muj
 
 
 if __name__ == "__main__": 

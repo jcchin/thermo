@@ -102,8 +102,9 @@ class Deriv_Tests(unittest.TestCase):
             delta[i] += complex(0,1e-40) #derivative starts to explode for ln(small values), so need a really small step to get accuracy
             new_chmatrix, new_pi, new_muj = self.cea._n2pi(delta)
             cs_muj = new_muj.imag/1e-40
+            cs_pi = new_pi.imag/1e-40
+            cs_chmatrix = new_chmatrix.imag/1e-40
 
-            
             # delta = base_n.copy()
             # delta[i] *= 1.001
             # new_chmatrix, new_pi, new_muj = self.cea._n2pi(delta)
@@ -114,8 +115,16 @@ class Deriv_Tests(unittest.TestCase):
             a_chmatrix, a_pi, a_muj = self.cea._n2pi_applyJ(vec_n)
 
             error = np.abs(a_muj.real-cs_muj)
-
             self.assertTrue(np.all(error < 1e-3))
+
+            error = np.abs(a_pi.real-cs_pi)
+            self.assertTrue(np.all(error < 1e-3))
+
+            error = np.abs(a_chmatrix.real-cs_chmatrix)
+            self.assertTrue(np.all(error < 1e-3))
+
+
+
 
 
 if __name__ == "__main__": 
