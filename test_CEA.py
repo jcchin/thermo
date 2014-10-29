@@ -99,11 +99,11 @@ class Deriv_Tests(unittest.TestCase):
         for i in xrange(base_n.shape[0]): 
             
             delta = base_n.copy()
-            delta[i] += complex(0,1e-15) #why the heck do I need such a small step size here? 
+            delta[i] += complex(0,1e-40) #derivative starts to explode for ln(small values), so need a really small step to get accuracy
             new_chmatrix, new_pi, new_muj = self.cea._n2pi(delta)
-            cs_muj = new_muj.imag/1e-15
+            cs_muj = new_muj.imag/1e-40
 
-            #cs is giving weird results, so use FD as sanity check here
+            
             # delta = base_n.copy()
             # delta[i] *= 1.001
             # new_chmatrix, new_pi, new_muj = self.cea._n2pi(delta)
@@ -114,6 +114,7 @@ class Deriv_Tests(unittest.TestCase):
             a_chmatrix, a_pi, a_muj = self.cea._n2pi_applyJ(vec_n)
 
             error = np.abs(a_muj.real-cs_muj)
+
             self.assertTrue(np.all(error < 1e-3))
 
 

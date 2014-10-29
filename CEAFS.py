@@ -373,8 +373,8 @@ class CEAFS(object):    #trigger action on Mach
         num_element = self._num_element
         num_react = self._num_react
 
-
-        result_muj = n_guess[:-1]/self._n[:-1] - n_guess[-1]/self._n[-1]
+        epsilon = 1e-90 #numerical offset to handle concentrations going to zero
+        result_muj = n_guess[:-1]/(self._n[:-1]+epsilon) - n_guess[-1]/(self._n[-1]+epsilon)
 
         return None, None, result_muj
 
