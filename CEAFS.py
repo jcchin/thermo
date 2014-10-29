@@ -324,7 +324,7 @@ class CEAFS(object):    #trigger action on Mach
         #determine right side of matrix for eq 2.24
         for i in range( 0, num_element ):
             sum_aij_nj_muj = np.sum(self.aij[i]*nj*muj)
-            rhs[i]=bsub0[i]-bsubi[i]+sum_aij_nj_muj
+            rhs[i]=sum_aij_nj_muj + bsub0[i]-bsubi[i]
 
         #determine the right side of the matrix for eq 2.36
         sum_nj_muj = np.sum(nj*muj)
@@ -342,8 +342,18 @@ class CEAFS(object):    #trigger action on Mach
 
         results_rhs = np.zeros((num_element+1), dtype=self.dtype)
         
+        aij = self.aij
+        muj = self._muj
+        # for i in xrange(0, num_element):
+        #     results_rhs[i]= np.sum((-aij[i]+aij[i]*(muj+1))*n_guess[i])
+
+        for i in xrange(0, num_element):
+            results_rhs[i] = 0
+            for j in xrange(0, num_react): 
+                    results_rhs[i]+= (-aij[i][j] + aij[i][j]*(muj[j]+1))*n_guess[j]
+
         #print n_guess[-1], n_guess[:-1], self._muj
-        results_rhs[-1] = n_guess[-1] + np.sum(n_guess[:-1]*self._muj)
+        results_rhs[-1] = n_guess[-1] + np.sum(n_guess[:-1]*muj)
 
         results_chmatrix = np.zeros((num_element+1, num_element+1), dtype=self.dtype)
 
