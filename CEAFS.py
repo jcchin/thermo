@@ -273,7 +273,7 @@ class CEAFS(object):    #trigger action on Mach
 
         return nj/sum_nj
         
-    def _n2pi(self, n_guess): 
+    def _n2ls(self, n_guess): 
         """maps molar concentrations to pi coefficients matrix and a right-hand-side""" 
         num_react = self._num_react
         num_element = self._num_element
@@ -350,7 +350,7 @@ class CEAFS(object):    #trigger action on Mach
 
     def _resid_TP(self, n_guess): 
 
-        chmatrix, rhs, muj = self._n2pi(n_guess)
+        chmatrix, rhs, muj = self._n2ls(n_guess)
         pi_update = linalg.solve( chmatrix, rhs )
         n = self._pi2n(pi_update, muj)
 
@@ -370,7 +370,7 @@ class CEAFS(object):    #trigger action on Mach
 
         return result
 
-    def _n2pi_applyJ(self,n_guess):
+    def _n2ls_applyJ(self,n_guess):
         
         num_element = self._num_element
         num_react = self._num_react

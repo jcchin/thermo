@@ -89,40 +89,38 @@ class Deriv_Tests(unittest.TestCase):
             self.assertTrue(np.all(error < 1e-5))
 
 
-    def test_n2pi_applyJ(self): 
+    def test_n2ls_applyJ(self): 
 
         self.cea.set_total_TP( 1500, 1.034210 ) #kelvin, bars 
         base_n = np.array([7.94249751e-06, 2.27142886e-02, 4.29623938e-06, 2.27260187e-02], dtype='complex')
-        base_chmatrix, base_pi, base_muj = self.cea._n2pi(base_n)
+        base_chmatrix, base_pi, base_muj = self.cea._n2ls(base_n)
 
         for i in xrange(base_n.shape[0]): 
             
             delta = base_n.copy()
             delta[i] += complex(0,1e-40) #derivative starts to explode for ln(small values), so need a really small step to get accuracy
-            new_chmatrix, new_pi, new_muj = self.cea._n2pi(delta)
+            new_chmatrix, new_rhs, new_muj = self.cea._n2ls(delta)
             cs_muj = new_muj.imag/1e-40
-            cs_pi = new_pi.imag/1e-40
+            cs_rhs = new_rhs.imag/1e-40
             cs_chmatrix = new_chmatrix.imag/1e-40
 
             # delta = base_n.copy()
             # delta[i] *= 1.001
-            # new_chmatrix, new_pi, new_muj = self.cea._n2pi(delta)
+            # new_chmatrix, new_pi, new_muj = self.cea._n2ls(delta)
             # fd_muj = (new_muj-base_muj).real/(base_n[i]*.001)
 
             vec_n = np.zeros(base_n.shape)
             vec_n[i] = 1
-            a_chmatrix, a_pi, a_muj = self.cea._n2pi_applyJ(vec_n)
+            a_chmatrix, a_rhs, a_muj = self.cea._n2ls_applyJ(vec_n)
 
             error = np.abs(a_muj.real-cs_muj)
             self.assertTrue(np.all(error < 1e-3))
 
-            error = np.abs(a_pi.real-cs_pi)
+            error = np.abs(a_rhs.real-cs_rhs)
             self.assertTrue(np.all(error < 1e-3))
 
             error = np.abs(a_chmatrix.real-cs_chmatrix)
             self.assertTrue(np.all(error < 1e-3))
-
-
 
 
 
