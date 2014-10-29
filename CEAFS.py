@@ -375,13 +375,15 @@ class CEAFS(object):    #trigger action on Mach
         T = self.T.real
         return T_new*(2*ai[0]/T**3 + ai[1]*(1-np.log(T))/T**2 + ai[3]/2. + 2*ai[4]/3.*T + 3*ai[5]/4.*T**2 + 4*ai[6]/5.*T**3 - ai[7]/T**2)
 
-    def _S0_applyJ(self, T, val): 
+    def _S0_applyJ(self, T_new): 
         ai = self.a.T
-        return (-ai[0]/(2*T**2) - ai[1]/T + ai[2]*np.log(T) + ai[3]*T + ai[4]*T**2/2 + ai[5]*T**3/3 + ai[6]*T**4/5+ai[8] )
-
-    def _Cp0_applyJ(self, T, val): 
+        T = self.T
+        return T_new* (ai[0]/(T**3) + ai[1]/T**2 + ai[2]/T + ai[3] + ai[4]*T + ai[5]*T**2 + 4*ai[6]/5.*T**3)
+    
+    def _Cp0_applyJ(self, T_new): 
         ai = self.a.T
-        return ai[0]/T**2 + ai[1]/T + ai[2] + ai[3]*T + ai[4]*T**2 + ai[5]*T**3 + ai[6]*T**4 
+        T = self.T
+        return T_new* (-2*ai[0]/T**3 - ai[1]/T**2 + ai[3] + 2.*ai[4]*T + 3.*ai[5]*T**2 + 4.*ai[6]*T**3)
     
 
     def _n2ls_applyJ(self,n_guess, T=None, P=None):

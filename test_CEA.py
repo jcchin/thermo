@@ -88,11 +88,13 @@ class Deriv_Tests(unittest.TestCase):
             error = np.abs(analytic-cs)
             self.assertTrue(np.all(error < 1e-5))
 
-    def test_H0_applyJ(self): 
+    def test_H0_S0_Cp_applyJ(self): 
 
         base_T = 1500
         self.cea.T = base_T
         base_H0 = self.cea.H0()
+        base_S0 = self.cea.S0()
+        base_Cp0 = self.cea.Cp0()
 
         step_size = 1e-40
         delta_T = complex(self.cea.T,step_size)
@@ -101,15 +103,26 @@ class Deriv_Tests(unittest.TestCase):
         new_H0 = self.cea.H0()
         dH0_cs = new_H0.imag/step_size
 
-        # delta_T = base_T * (1+step_size)
-        # self.cea.T = delta_T
-        # new_H0 = self.cea.H0()
-        # dH0_fd = (new_H0.real-base_H0.real)/(1500*step_size)
+        new_S0 = self.cea.S0()
+        dS0_cs = new_S0.imag/step_size
+
+        new_Cp0 = self.cea.Cp0()
+        dCp0_cs = new_Cp0.imag/step_size
+
 
         dH0_a = self.cea._H0_applyJ(1.)
-
         error = dH0_a - dH0_cs
         self.assertTrue(np.linalg.norm(error) < 1e-5)
+
+        dS0_a = self.cea._S0_applyJ(1.)
+        error = dS0_a - dS0_cs
+        self.assertTrue(np.linalg.norm(error) < 1e-5)
+
+        dCp0_a = self.cea._Cp0_applyJ(1.)
+        error = dCp0_a - dCp0_cs
+        self.assertTrue(np.linalg.norm(error) < 1e-5)
+
+
 
 
     def test_n2ls_applyJ(self): 
