@@ -40,23 +40,25 @@ class CEAFS(object):    #trigger action on Mach
             _aij_prod[i][j] = aij[i]*aij[j]
             
 
-    def __init__(self): 
+    def __init__(self, dtype="float"): 
+
+        self.dtype = dtype #allows me to use complex values only if needed
 
         self._n = empty(self._num_react+1, dtype='complex')
 
-        self._Chem = np.zeros((self._num_element+1, self._num_element+1), dtype='complex') 
-        self._Temp = np.zeros((self._num_element+1, self._num_element+1), dtype='complex') 
-        self._Press= np.zeros((self._num_element+1, self._num_element+1), dtype='complex') 
+        self._Chem = np.zeros((self._num_element+1, self._num_element+1), dtype=dtype) 
+        self._Temp = np.zeros((self._num_element+1, self._num_element+1), dtype=dtype) 
+        self._Press= np.zeros((self._num_element+1, self._num_element+1), dtype=dtype) 
 
-        self._rhs = np.zeros(self._num_element + 1, dtype='complex')
+        self._rhs = np.zeros(self._num_element + 1, dtype=dtype)
 
-        self._results = np.zeros(self._num_element + 1, dtype='complex')
+        self._results = np.zeros(self._num_element + 1, dtype=dtype)
 
-        self._bsubi = np.zeros(self._num_element, dtype='complex')
-        self._bsub0 = np.zeros(self._num_element, dtype='complex')
+        self._bsubi = np.zeros(self._num_element, dtype=dtype)
+        self._bsub0 = np.zeros(self._num_element, dtype=dtype)
 
-        self._Chem_hP = np.zeros((self._num_element+2, self._num_element+2), dtype='complex') 
-        self._rhs_hP = np.zeros(self._num_element + 2, dtype='complex')        
+        self._Chem_hP = np.zeros((self._num_element+2, self._num_element+2), dtype=dtype) 
+        self._rhs_hP = np.zeros(self._num_element + 2, dtype=dtype)        
         
         
         self.T = 0 #Kelvin
@@ -94,7 +96,7 @@ class CEAFS(object):    #trigger action on Mach
             sum_aij_nj = np.sum(self.aij[i] * nj / self.wt_mole)
             bsub0[ i ] = sum_aij_nj    
                                
-        nj[:] = ones(num_react, dtype='complex')/num_react #reset initial guess to equal concentrations
+        nj[:] = ones(num_react, dtype=self.dtype)/num_react #reset initial guess to equal concentrations
 
 
 
@@ -335,7 +337,7 @@ class CEAFS(object):    #trigger action on Mach
     def _pi2n(self, pi_update, muj): 
         """maps pi updates back to concentration updates""" 
         num_react = self._num_react
-        n = np.empty((num_react+1, ), dtype="complex")
+        n = np.empty((num_react+1, ), dtype=self.dtype)
 
         #update total moles eq 3.4
         n[-1] = pi_update[-1]
@@ -376,9 +378,8 @@ class CEAFS(object):    #trigger action on Mach
         epsilon = 1e-90 #numerical offset to handle concentrations going to zero
         result_muj = n_guess[:-1]/(self._n[:-1]+epsilon) - n_guess[-1]/(self._n[-1]+epsilon)
 
-        results_pi = np.zeros((num_element+1), dtype="complex")
-        results_chmatrix = np.zeros((num_element+1, num_element+1), dtype="complex")
-
+        results_pi = np.zeros((num_element+1), dtype=self.dtype)
+        results_chmatrix = np.zeros((num_element+1, num_element+1), dtype=self.dtype)
 
         return results_chmatrix, results_pi, result_muj
 

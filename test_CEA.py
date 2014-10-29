@@ -8,7 +8,7 @@ from CEAFS import CEAFS
 class CEA_TestCase(unittest.TestCase): 
 
     def setUp(self): 
-        self.cea = CEAFS(); 
+        self.cea = CEAFS(dtype="complex"); 
 
 
     def test_4000K(self): 
@@ -43,7 +43,7 @@ class CEA_TestCase(unittest.TestCase):
         
 class Deriv_Tests(unittest.TestCase):
     def setUp(self): 
-        self.cea = CEAFS(); 
+        self.cea = CEAFS(dtype="complex"); 
 
     def test_pi2n_applyJ(self):
 
@@ -95,7 +95,6 @@ class Deriv_Tests(unittest.TestCase):
         base_n = np.array([7.94249751e-06, 2.27142886e-02, 4.29623938e-06, 2.27260187e-02], dtype='complex')
         base_chmatrix, base_pi, base_muj = self.cea._n2pi(base_n)
 
-        #dmuj_dn
         for i in xrange(base_n.shape[0]): 
             
             delta = base_n.copy()
