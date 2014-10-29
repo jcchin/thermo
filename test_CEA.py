@@ -8,7 +8,7 @@ from CEAFS import CEAFS
 class CEA_TestCase(unittest.TestCase): 
 
     def setUp(self): 
-        self.cea = CEAFS(); 
+        self.cea = CEAFS(dtype="complex"); 
 
 
     def test_4000K(self): 
@@ -43,7 +43,7 @@ class CEA_TestCase(unittest.TestCase):
         
 class Deriv_Tests(unittest.TestCase):
     def setUp(self): 
-        self.cea = CEAFS(); 
+        self.cea = CEAFS(dtype="complex"); 
 
     def test_pi2n_applyJ(self):
 
@@ -53,6 +53,7 @@ class Deriv_Tests(unittest.TestCase):
 
         base_n = self.cea._pi2n(base_pi,base_muj)
 
+        #check pi inputs
         for i in xrange (len(base_pi)):
             # inaccurate fd
             # delta = list(base_pi)
@@ -62,48 +63,100 @@ class Deriv_Tests(unittest.TestCase):
 
             delta = list(base_pi)
             delta[i] += .01j
-            cs = (self.cea._pi2n(delta,base_muj)-base_n).imag/.01
+            cs = self.cea._pi2n(delta,base_muj).imag/.01
 
             vec_pi = np.zeros(len(base_pi))
             vec_pi[i] = 1
             vec_muj = np.zeros(len(base_muj))
 
             analytic = self.cea._pi2n_applyJ(vec_pi,vec_muj).real
-            error = abs(analytic-cs)
+            error = np.abs(analytic-cs)
             self.assertTrue(np.all(error < 1e-5))
 
-
+        #check muj input
         for i in xrange (len(base_muj)):
 
             delta = list(base_muj)
             delta[i] += .01j
-            cs = (self.cea._pi2n(base_pi,delta)-base_n).imag/.01
+            cs = self.cea._pi2n(base_pi,delta).imag/.01
 
             vec_muj = np.zeros(len(base_muj))
             vec_muj[i] = 1
             vec_pi = np.zeros(len(base_pi))
 
             analytic = self.cea._pi2n_applyJ(vec_pi,vec_muj).real
-            error = abs(analytic-cs)
+            error = np.abs(analytic-cs)
             self.assertTrue(np.all(error < 1e-5))
 
-    def test_n2pi_applyL(self):
+    def test_H0_S0_Cp_applyJ(self): 
 
-        base_n_guess = [ 0.02040748+0.j,  0.00231478+0.j,  0.01020431+0.j,  0.03292581+0.j]
+        base_T = 1500
+        self.cea.T = base_T
+        base_H0 = self.cea.H0()
+        base_S0 = self.cea.S0()
+        base_Cp0 = self.cea.Cp0()
+
+        step_size = 1e-40
+        delta_T = complex(self.cea.T,step_size)
         
-        base_chmatrix, base_rhs, base_muj = self.cea._n2pi(base_n_guess)
+        self.cea.T = delta_T
+        new_H0 = self.cea.H0()
+        dH0_cs = new_H0.imag/step_size
 
-        delta_n_guess = np.copy(base_n_guess)
-        delta_n_guess[0] += .01j
+        new_S0 = self.cea.S0()
+        dS0_cs = new_S0.imag/step_size
 
-        pert_chmatrix, pert_rhs, pert_muj = self.cea._n2pi(delta_n_guess)
+        new_Cp0 = self.cea.Cp0()
+        dCp0_cs = new_Cp0.imag/step_size
 
-        #print (pert_chmatrix[0][0] - base_chmatrix[0][0]).imag/.01
-        print 30*"-"
-        print base_muj
-        print pert_muj
-        print "!!!", (pert_muj - base_muj).imag/.01
-        self.assertTrue(True)
+
+        dH0_a = self.cea._H0_applyJ(1.)
+        error = dH0_a - dH0_cs
+        self.assertTrue(np.linalg.norm(error) < 1e-5)
+
+        dS0_a = self.cea._S0_applyJ(1.)
+        error = dS0_a - dS0_cs
+        self.assertTrue(np.linalg.norm(error) < 1e-5)
+
+        dCp0_a = self.cea._Cp0_applyJ(1.)
+        error = dCp0_a - dCp0_cs
+        self.assertTrue(np.linalg.norm(error) < 1e-5)
+
+
+
+
+    def test_n2ls_applyJ(self): 
+
+        self.cea.set_total_TP( 1500, 1.034210 ) #kelvin, bars 
+        base_n = np.array([7.94249751e-06, 2.27142886e-02, 4.29623938e-06, 2.27260187e-02], dtype='complex')
+        base_chmatrix, base_pi, base_muj = self.cea._n2ls(base_n)
+
+        for i in xrange(base_n.shape[0]): 
+            
+            delta = base_n.copy()
+            delta[i] += complex(0,1e-40) #derivative starts to explode for ln(small values), so need a really small step to get accuracy
+            new_chmatrix, new_rhs, new_muj = self.cea._n2ls(delta)
+            cs_muj = new_muj.imag/1e-40
+            cs_rhs = new_rhs.imag/1e-40
+            cs_chmatrix = new_chmatrix.imag/1e-40
+
+            # delta = base_n.copy()
+            # delta[i] *= 1.001
+            # new_chmatrix, new_pi, new_muj = self.cea._n2ls(delta)
+            # fd_muj = (new_muj-base_muj).real/(base_n[i]*.001)
+
+            vec_n = np.zeros(base_n.shape)
+            vec_n[i] = 1
+            a_chmatrix, a_rhs, a_muj = self.cea._n2ls_applyJ(vec_n)
+
+            error = np.abs(a_muj.real-cs_muj)
+            self.assertTrue(np.all(error < 1e-3))
+
+            error = np.abs(a_rhs.real-cs_rhs)
+            self.assertTrue(np.all(error < 1e-3))
+
+            error = np.abs(a_chmatrix.real-cs_chmatrix)
+            self.assertTrue(np.all(error < 1e-3))
 
 
 
