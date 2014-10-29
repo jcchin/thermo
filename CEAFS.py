@@ -329,10 +329,37 @@ class CEAFS(object):    #trigger action on Mach
 
         #determine the right side of the matrix for eq 2.36
         sum_nj_muj = np.sum(nj*muj)
-        rhs[num_element] = nmoles - sum_nj + sum_nj_muj
+        rhs[-1] = nmoles - sum_nj + sum_nj_muj
 
         return chmatrix, rhs, muj
+    
+    def _n2ls_applyJ(self,n_guess, T, P):
 
+        num_element = self._num_element
+        num_react = self._num_react
+
+        epsilon = 1e-90 #numerical offset to handle concentrations going to zero
+        result_muj = n_guess[:-1]/(self._n[:-1]+epsilon) - n_guess[-1]/(self._n[-1]+epsilon) + self._H0_applyJ(T) - self._S0_applyJ(T) + 1/self.P*P
+
+        results_pi = np.zeros((num_element+1), dtype=self.dtype)
+        results_chmatrix = np.zeros((num_element+1, num_element+1), dtype=self.dtype)
+
+        return results_chmatrix, results_pi, result_muj
+
+    def _H0_applyJ(self, T_new): 
+        ai = self.a.T
+        T = self.T.real
+        return T_new*(2*ai[0]/T**3 + ai[1]*(1-np.log(T))/T**2 + ai[3]/2. + 2*ai[4]/3.*T + 3*ai[5]/4.*T**2 + 4*ai[6]/5.*T**3 - ai[7]/T**2)
+
+    def _S0_applyJ(self, T_new): 
+        ai = self.a.T
+        T = self.T
+        return T_new* (ai[0]/(T**3) + ai[1]/T**2 + ai[2]/T + ai[3] + ai[4]*T + ai[5]*T**2 + 4*ai[6]/5.*T**3)
+    
+    def _Cp0_applyJ(self, T_new): 
+        ai = self.a.T
+        T = self.T
+        return T_new* (-2*ai[0]/T**3 - ai[1]/T**2 + ai[3] + 2.*ai[4]*T + 3.*ai[5]*T**2 + 4.*ai[6]*T**3)
 
     def _pi2n(self, pi_update, muj): 
         """maps pi updates back to concentration updates""" 
@@ -370,35 +397,9 @@ class CEAFS(object):    #trigger action on Mach
 
         return result
 
-    def _H0_applyJ(self, T_new): 
-        ai = self.a.T
-        T = self.T.real
-        return T_new*(2*ai[0]/T**3 + ai[1]*(1-np.log(T))/T**2 + ai[3]/2. + 2*ai[4]/3.*T + 3*ai[5]/4.*T**2 + 4*ai[6]/5.*T**3 - ai[7]/T**2)
-
-    def _S0_applyJ(self, T_new): 
-        ai = self.a.T
-        T = self.T
-        return T_new* (ai[0]/(T**3) + ai[1]/T**2 + ai[2]/T + ai[3] + ai[4]*T + ai[5]*T**2 + 4*ai[6]/5.*T**3)
-    
-    def _Cp0_applyJ(self, T_new): 
-        ai = self.a.T
-        T = self.T
-        return T_new* (-2*ai[0]/T**3 - ai[1]/T**2 + ai[3] + 2.*ai[4]*T + 3.*ai[5]*T**2 + 4.*ai[6]*T**3)
     
 
-    def _n2ls_applyJ(self,n_guess, T=None, P=None):
-
-        num_element = self._num_element
-        num_react = self._num_react
-
-        epsilon = 1e-90 #numerical offset to handle concentrations going to zero
-        result_muj = n_guess[:-1]/(self._n[:-1]+epsilon) - n_guess[-1]/(self._n[-1]+epsilon)
-
-        results_pi = np.zeros((num_element+1), dtype=self.dtype)
-        results_chmatrix = np.zeros((num_element+1, num_element+1), dtype=self.dtype)
-
-        return results_chmatrix, results_pi, result_muj
-
+    
 
 if __name__ == "__main__": 
 
