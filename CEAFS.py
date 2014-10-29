@@ -181,8 +181,7 @@ class CEAFS(object):    #trigger action on Mach
         self.Cp = (Cpe+Cpf)*1.987
         self.Cv = self.Cp + self._n[-1]*1.987*dlnVqdlnT**2/dlnVqdlnP
         self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
-        MM = np.sum(nj*self.wt_mole)
-        self.rho = (P*MM)/(8.31451*T )
+        self.rho = P/(sum_nj*8314.51*T ) 
 
         return nj/sum_nj
 
