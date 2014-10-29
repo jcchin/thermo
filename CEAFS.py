@@ -340,10 +340,14 @@ class CEAFS(object):    #trigger action on Mach
         epsilon = 1e-90 #numerical offset to handle concentrations going to zero
         result_muj = n_guess[:-1]/(self._n[:-1]+epsilon) - n_guess[-1]/(self._n[-1]+epsilon) + self._H0_applyJ(T) - self._S0_applyJ(T) + 1/self.P*P
 
-        results_pi = np.zeros((num_element+1), dtype=self.dtype)
+        results_rhs = np.zeros((num_element+1), dtype=self.dtype)
+        
+        #print n_guess[-1], n_guess[:-1], self._muj
+        results_rhs[-1] = n_guess[-1] + np.sum(n_guess[:-1]*self._muj)
+
         results_chmatrix = np.zeros((num_element+1, num_element+1), dtype=self.dtype)
 
-        return results_chmatrix, results_pi, result_muj
+        return results_chmatrix, results_rhs, result_muj
 
     def _H0_applyJ(self, T_new): 
         ai = self.a.T
@@ -377,9 +381,9 @@ class CEAFS(object):    #trigger action on Mach
     def _resid_TP(self, n_guess): 
 
         chmatrix, rhs, muj = self._n2ls(n_guess)
+        self._muj = muj #saved for later use by other functions
         pi_update = linalg.solve( chmatrix, rhs )
         n = self._pi2n(pi_update, muj)
-
         return n
 
     def _pi2n_applyJ(self, pi_update, muj):
@@ -396,9 +400,7 @@ class CEAFS(object):    #trigger action on Mach
 
         return result
 
-    
 
-    
 
 if __name__ == "__main__": 
 

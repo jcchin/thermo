@@ -129,7 +129,7 @@ class Deriv_Tests(unittest.TestCase):
 
         self.cea.set_total_TP( 1500, 1.034210 ) #kelvin, bars 
         base_n = np.array([7.94249751e-06, 2.27142886e-02, 4.29623938e-06, 2.27260187e-02], dtype='complex')
-        base_chmatrix, base_pi, base_muj = self.cea._n2ls(base_n)
+        base_chmatrix, base_rhs, base_muj = self.cea._n2ls(base_n)
 
         for i in xrange(base_n.shape[0]): 
             
@@ -140,10 +140,12 @@ class Deriv_Tests(unittest.TestCase):
             cs_rhs = new_rhs.imag/1e-40
             cs_chmatrix = new_chmatrix.imag/1e-40
 
-            # delta = base_n.copy()
-            # delta[i] *= 1.001
-            # new_chmatrix, new_pi, new_muj = self.cea._n2ls(delta)
-            # fd_muj = (new_muj-base_muj).real/(base_n[i]*.001)
+            delta = base_n.copy()
+            delta[i] *= 1.001
+            new_chmatrix, new_rhs, new_muj = self.cea._n2ls(delta)
+            fd_muj = (new_muj-base_muj).real/(base_n[i]*.001)
+            fd_rhs = (new_rhs-base_rhs).real/(base_n[i]*.001)
+
 
             vec_n = np.zeros(base_n.shape)
             vec_n[i] = 1
@@ -154,6 +156,11 @@ class Deriv_Tests(unittest.TestCase):
 
             # error = np.abs(a_rhs.real-cs_rhs)
             # self.assertTrue(np.all(error < 1e-3))
+
+            error = np.abs(a_rhs.real-cs_rhs)
+            #self.assertTrue(np.all(error < 1e-3))
+            print a_rhs.real[-1], cs_rhs.real[-1]
+            #self.assertTrue(error[-1] < 1e-3)
 
             # error = np.abs(a_chmatrix.real-cs_chmatrix)
             # self.assertTrue(np.all(error < 1e-3))
