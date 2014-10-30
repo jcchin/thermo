@@ -172,6 +172,8 @@ class Deriv_Tests(unittest.TestCase):
 
             # error = np.abs(a_chmatrix.real-cs_chmatrix)
             # self.assertTrue(np.all(error < 1e-3))
+        
+
         #------- T
         blank_n = np.zeros(base_n.shape)
         self.cea.T = complex(1500,1e-40) #this is set on line 130
@@ -187,8 +189,9 @@ class Deriv_Tests(unittest.TestCase):
         self.assertTrue(np.all(error < 1e-3))
 
         error = np.abs((a_rhs.real-cs_rhs)/(cs_rhs+1e-90))
-        self.assertTrue(np.all(error[-1] < 1e-3))
-        #self.assertTrue(np.all(error < 1e-3))
+        self.assertTrue(np.all(error < 1e-3))
+        
+
         #------- P
         self.cea.P = complex(1.034210,1e-40) #this is set on line 130
         self.cea.T = 1500
