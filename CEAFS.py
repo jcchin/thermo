@@ -357,26 +357,26 @@ class CEAFS(object):    #trigger action on Mach
             results_rhs[i] -= np.sum(aij[i]*nj/n_moles)*n_guess[-1]
 
         #print n_guess[-1], n_guess[:-1], self._muj
-        results_rhs[-1] = (1-np.sum(nj)/n_moles)*n_guess[-1] + np.sum(n_guess[:-1]*muj)
+        results_rhs[-1] = (1-np.sum(nj)/n_moles)*n_guess[-1] + np.sum(n_guess[:-1]*muj) + np.sum((self._H0_applyJ(nj)- self._S0_applyJ(nj))*T)
 
         results_chmatrix = np.zeros((num_element+1, num_element+1), dtype=self.dtype)
 
         return results_chmatrix, results_rhs, result_muj
 
-    def _H0_applyJ(self, T_new): 
+    def _H0_applyJ(self, vec): 
         ai = self.a.T
         T = self.T.real
-        return T_new*(2*ai[0]/T**3 + ai[1]*(1-np.log(T))/T**2 + ai[3]/2. + 2*ai[4]/3.*T + 3*ai[5]/4.*T**2 + 4*ai[6]/5.*T**3 - ai[7]/T**2)
+        return vec*(2*ai[0]/T**3 + ai[1]*(1-np.log(T))/T**2 + ai[3]/2. + 2*ai[4]/3.*T + 3*ai[5]/4.*T**2 + 4*ai[6]/5.*T**3 - ai[7]/T**2)
 
-    def _S0_applyJ(self, T_new): 
+    def _S0_applyJ(self, vec): 
         ai = self.a.T
         T = self.T
-        return T_new* (ai[0]/(T**3) + ai[1]/T**2 + ai[2]/T + ai[3] + ai[4]*T + ai[5]*T**2 + 4*ai[6]/5.*T**3)
+        return vec* (ai[0]/(T**3) + ai[1]/T**2 + ai[2]/T + ai[3] + ai[4]*T + ai[5]*T**2 + 4*ai[6]/5.*T**3)
     
-    def _Cp0_applyJ(self, T_new): 
+    def _Cp0_applyJ(self, vec): 
         ai = self.a.T
         T = self.T
-        return T_new* (-2*ai[0]/T**3 - ai[1]/T**2 + ai[3] + 2.*ai[4]*T + 3.*ai[5]*T**2 + 4.*ai[6]*T**3)
+        return vec* (-2*ai[0]/T**3 - ai[1]/T**2 + ai[3] + 2.*ai[4]*T + 3.*ai[5]*T**2 + 4.*ai[6]*T**3)
 
     def _pi2n(self, pi_update, muj): 
         """maps pi updates back to concentration updates""" 

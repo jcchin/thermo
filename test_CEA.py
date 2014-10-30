@@ -163,7 +163,7 @@ class Deriv_Tests(unittest.TestCase):
             a_rhs = a_rhs.real
             a_muj = a_muj.real 
 
-            error = np.abs(a_muj.real-cs_muj)/(cs_muj+1e-50)
+            error = np.abs((a_muj.real-cs_muj)/(cs_muj+1e-50))
             self.assertTrue(np.all(error < 1e-5))
 
             #using relative error here
@@ -185,6 +185,10 @@ class Deriv_Tests(unittest.TestCase):
 
         error = np.abs(a_muj.real-cs_muj)
         self.assertTrue(np.all(error < 1e-3))
+
+        error = np.abs((a_rhs.real-cs_rhs)/(cs_rhs+1e-90))
+        self.assertTrue(np.all(error[-1] < 1e-3))
+        #self.assertTrue(np.all(error < 1e-3))
         #------- P
         self.cea.P = complex(1.034210,1e-40) #this is set on line 130
         self.cea.T = 1500
