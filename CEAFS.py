@@ -354,7 +354,6 @@ class CEAFS(object):    #trigger action on Mach
             results_rhs[i] = 0
             for j in xrange(0, num_react): 
                     results_rhs[i]+= (-aij[i][j] + aij[i][j]*(muj[j]+1))*n_guess[j] 
-            print "here", aij[i], nj.real, n_moles.real
             results_rhs[i] -= np.sum(aij[i]*nj/n_moles)*n_guess[-1]
 
         #print n_guess[-1], n_guess[:-1], self._muj

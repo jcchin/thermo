@@ -129,17 +129,14 @@ class Deriv_Tests(unittest.TestCase):
 
         self.cea.T = 1500 
         self.cea.P = 1.034210
-        base_n = np.array([7.94249751e-06, 2.27142886e-02, 4.29623938e-06, 2.27260187e-02], dtype='complex')
-        self.cea._n = base_n.copy() #need this baseline point stored in the object
-        #base_n = np.array([2, 2, 2, 3], dtype='complex')
-        #self.cea._resid_TP(base_n)
+        self.cea.set_total_TP( 1500, 1.034210 ) #kelvin, bars
+        base_n = self.cea._n.copy()
         base_chmatrix, base_rhs, base_muj = self.cea._n2ls(base_n)
-        
+
         #copy because cea element used a single rhs vector, which gets changes. 
         base_chmatrix = base_chmatrix.copy()
         base_rhs = base_rhs.copy()
-
-        print 
+        base_muj = base_muj.copy()
 
         for i in xrange(base_n.shape[0]): 
             
