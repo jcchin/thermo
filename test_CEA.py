@@ -175,13 +175,6 @@ class Deriv_Tests(unittest.TestCase):
 
             #using relative error here
             error = np.abs((a_rhs.real-cs_rhs)/(cs_rhs+1e-90)) #1e-50 protects against divide by zero errors
-            print
-            print vec_n
-            print a_rhs
-            print cs_rhs
-            # print fd_rhs
-            print error 
-            print 
             self.assertTrue(np.all(error < 1e-5))
             #print a_rhs.real[-1], cs_rhs.real[-1]
             #self.assertTrue(error[-1] < 1e-3)
