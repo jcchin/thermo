@@ -157,10 +157,10 @@ class Deriv_Tests(unittest.TestCase):
             # error = np.abs(a_rhs.real-cs_rhs)
             # self.assertTrue(np.all(error < 1e-3))
 
-            error = np.abs(a_rhs.real-cs_rhs)
+            error = np.abs((a_rhs.real-cs_rhs)/cs_rhs)/
             #self.assertTrue(np.all(error < 1e-3))
-            print a_rhs.real[-1], cs_rhs.real[-1]
-            #self.assertTrue(error[-1] < 1e-3)
+            print error, a_rhs.real[-1], cs_rhs.real[-1]
+            self.assertTrue(error[-1] < 1e-3)
 
             # error = np.abs(a_chmatrix.real-cs_chmatrix)
             # self.assertTrue(np.all(error < 1e-3))
