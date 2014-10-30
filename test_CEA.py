@@ -127,40 +127,64 @@ class Deriv_Tests(unittest.TestCase):
 
     def test_n2ls_applyJ(self): 
 
-        self.cea.set_total_TP( 1500, 1.034210 ) #kelvin, bars 
+        self.cea.T = 1500 
+        self.cea.P = 1.034210
         base_n = np.array([7.94249751e-06, 2.27142886e-02, 4.29623938e-06, 2.27260187e-02], dtype='complex')
+        self.cea._n = base_n.copy() #need this baseline point stored in the object
+        #base_n = np.array([2, 2, 2, 3], dtype='complex')
+        #self.cea._resid_TP(base_n)
         base_chmatrix, base_rhs, base_muj = self.cea._n2ls(base_n)
+        
+        #copy because cea element used a single rhs vector, which gets changes. 
+        base_chmatrix = base_chmatrix.copy()
+        base_rhs = base_rhs.copy()
+
+        print 
 
         for i in xrange(base_n.shape[0]): 
             
             delta = base_n.copy()
-            delta[i] += complex(0,1e-40) #derivative starts to explode for ln(small values), so need a really small step to get accuracy
+            step = 1e-15
+            delta[i] += complex(0,step) #derivative starts to explode for ln(small values), so need a really small step to get accuracy
             new_chmatrix, new_rhs, new_muj = self.cea._n2ls(delta)
-            cs_muj = new_muj.imag/1e-40
-            cs_rhs = new_rhs.imag/1e-40
-            cs_chmatrix = new_chmatrix.imag/1e-40
+            cs_muj = new_muj.imag/step
+            cs_rhs = new_rhs.imag/step
+            cs_chmatrix = new_chmatrix.imag/step
 
-            delta = base_n.copy()
-            delta[i] *= 1.001
-            new_chmatrix, new_rhs, new_muj = self.cea._n2ls(delta)
-            fd_muj = (new_muj-base_muj).real/(base_n[i]*.001)
-            fd_rhs = (new_rhs-base_rhs).real/(base_n[i]*.001)
+            # delta = base_n.copy()
+            # delta[i] *= 1.000001
+            # new_chmatrix, new_rhs, new_muj = self.cea._n2ls(delta)
+            # fd_muj = (new_muj-base_muj).real/(base_n[i].real*.000001)
+            # fd_rhs = (new_rhs-base_rhs).real/(base_n[i].real*.000001)
 
 
+            #reset the 
             vec_n = np.zeros(base_n.shape)
             vec_n[i] = 1
             a_chmatrix, a_rhs, a_muj = self.cea._n2ls_applyJ(vec_n, 0,0)
+            a_chmatrix = a_chmatrix.real
+            a_rhs = a_rhs.real
+            a_muj = a_muj.real 
 
             error = np.abs(a_muj.real-cs_muj)
-            self.assertTrue(np.all(error < 1e-3))
+            #self.assertTrue(np.all(error < 1e-3))
 
             # error = np.abs(a_rhs.real-cs_rhs)
             # self.assertTrue(np.all(error < 1e-3))
 
-            error = np.abs((a_rhs.real-cs_rhs)/cs_rhs)/
-            #self.assertTrue(np.all(error < 1e-3))
-            print error, a_rhs.real[-1], cs_rhs.real[-1]
-            self.assertTrue(error[-1] < 1e-3)
+
+            #using relative error here
+            error = np.abs((a_rhs.real-cs_rhs)/(cs_rhs+1e-90)) #1e-50 protects against divide by zero errors
+            print
+            print vec_n
+            print a_rhs
+            print cs_rhs
+            # print fd_rhs
+            print error 
+            print 
+            self.assertTrue(np.all(error < 1e-5))
+            #print a_rhs.real[-1], cs_rhs.real[-1]
+            #self.assertTrue(error[-1] < 1e-3)
 
             # error = np.abs(a_chmatrix.real-cs_chmatrix)
             # self.assertTrue(np.all(error < 1e-3))
@@ -191,6 +215,7 @@ class Deriv_Tests(unittest.TestCase):
         error = np.abs(a_muj.real-cs_muj)
         self.assertTrue(np.all(error < 1e-3))
 
+        #------- 
 
 
 
