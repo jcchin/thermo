@@ -148,11 +148,12 @@ class Deriv_Tests(unittest.TestCase):
             cs_rhs = new_rhs.imag/step
             cs_chmatrix = new_chmatrix.imag/step
 
-            # delta = base_n.copy()
-            # delta[i] *= 1.000001
-            # new_chmatrix, new_rhs, new_muj = self.cea._n2ls(delta)
-            # fd_muj = (new_muj-base_muj).real/(base_n[i].real*.000001)
-            # fd_rhs = (new_rhs-base_rhs).real/(base_n[i].real*.000001)
+            delta = base_n.copy()
+            delta[i] *= 1.000001
+            new_chmatrix, new_rhs, new_muj = self.cea._n2ls(delta)
+            fd_muj = (new_muj-base_muj).real/(base_n[i].real*.000001)
+            fd_rhs = (new_rhs-base_rhs).real/(base_n[i].real*.000001)
+            fd_chmatrix = (new_chmatrix-base_chmatrix).real/(base_n[i].real*.000001)
 
 
             #reset the 
@@ -170,8 +171,14 @@ class Deriv_Tests(unittest.TestCase):
             error = np.abs((a_rhs.real-cs_rhs)/(cs_rhs+1e-90)) #1e-50 protects against divide by zero errors
             self.assertTrue(np.all(error < 1e-5))
 
-            # error = np.abs(a_chmatrix.real-cs_chmatrix)
-            # self.assertTrue(np.all(error < 1e-3))
+            print a_chmatrix
+            print 
+            print cs_chmatrix
+            print 
+            print fd_chmatrix
+            
+            error = np.abs((a_chmatrix.real-cs_chmatrix)/(cs_chmatrix+1e-90))
+            self.assertTrue(np.all(error[:2,:2] < 1e-3))
         
 
         #------- T
