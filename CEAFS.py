@@ -40,9 +40,9 @@ class CEAFS(object):    #trigger action on Mach
             _aij_prod[i][j] = aij[i]*aij[j]
 
     _aij_prod_deriv = np.zeros(num_element,num_react)
-        for i in xrange(num_element):
-            for j in xrange(num_element):
-                _aij_prod_deriv = self._aij_prod[i][j][j]
+    for i in xrange(num_element):
+        for j in xrange(num_element):
+            _aij_prod_deriv = self._aij_prod[i][j][j]
             
 
     def __init__(self, dtype="float"): 
