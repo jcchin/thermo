@@ -49,7 +49,7 @@ class CEAFS(object):    #trigger action on Mach
 
         self.dtype = dtype #allows me to use complex values only if needed
 
-        self._n = empty(self._num_react+1, dtype='complex')
+        self._n = empty(self._num_react+1, dtype=dtype)
 
         self._Chem = np.zeros((self._num_element+1, self._num_element+1), dtype=dtype) 
         self._Temp = np.zeros((self._num_element+1, self._num_element+1), dtype=dtype) 
