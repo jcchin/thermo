@@ -170,8 +170,8 @@ class Deriv_Tests(unittest.TestCase):
             error = np.abs((a_rhs.real-cs_rhs)/(cs_rhs+1e-90)) #1e-50 protects against divide by zero errors
             self.assertTrue(np.all(error < 1e-5))
 
-            # error = np.abs(a_chmatrix.real-cs_chmatrix)
-            # self.assertTrue(np.all(error < 1e-3))
+            error = np.abs((a_chmatrix.real-cs_chmatrix)/(cs_chmatrix+1e-90))
+            self.assertTrue(np.all(error[:2,:2] < 1e-3))
         
 
         #------- T
