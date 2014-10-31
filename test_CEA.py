@@ -186,10 +186,10 @@ class Deriv_Tests(unittest.TestCase):
         a_chmatrix, a_rhs, a_muj = self.cea._n2ls_applyJ(blank_n, 1,0)
 
         error = np.abs(a_muj.real-cs_muj)
-        self.assertTrue(np.all(error < 1e-3))
+        self.assertTrue(np.all(error < 1e-5))
 
         error = np.abs((a_rhs.real-cs_rhs)/(cs_rhs+1e-90))
-        self.assertTrue(np.all(error < 1e-3))
+        self.assertTrue(np.all(error < 1e-5))
         
 
         #------- P
@@ -203,10 +203,13 @@ class Deriv_Tests(unittest.TestCase):
 
         a_chmatrix, a_rhs, a_muj = self.cea._n2ls_applyJ(blank_n, 0,1)
 
-        error = np.abs(a_muj.real-cs_muj)
-        self.assertTrue(np.all(error < 1e-3))
+        error = np.abs((a_muj.real-cs_muj)/(cs_muj+1e-90))
+        self.assertTrue(np.all(error < 1e-5))
 
-        #------- 
+        error = np.abs((a_rhs.real-cs_rhs)/(cs_rhs+1e-90))
+        self.assertTrue(np.all(error < 1e-5))
+        #self.assertTrue(np.all(error[-1] < 1e-3))
+        
 
 
 
