@@ -374,6 +374,10 @@ class CEAFS(object):    #trigger action on Mach
 
         results_chmatrix[:num_element,:num_element] = np.dot(self._aij_prod_deriv,n_guess[:-1]).reshape((num_element,num_element))
 
+        for i in xrange(num_element):
+            results_chmatrix[i,-1] = np.sum(aij[i]*n_guess[:-1])
+        for i in xrange(num_element):
+            results_chmatrix[-1,i] = np.sum(aij[i]*n_guess[:-1])
 
         return results_chmatrix, results_rhs, result_muj
 
