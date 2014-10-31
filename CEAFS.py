@@ -39,11 +39,12 @@ class CEAFS(object):    #trigger action on Mach
         for j in range( 0, _num_element ):
             _aij_prod[i][j] = aij[i]*aij[j]
 
-    _aij_prod_deriv = np.zeros(num_element,num_react)
-    for i in xrange(num_element):
-        for j in xrange(num_element):
-            _aij_prod_deriv = self._aij_prod[i][j][j]
-            
+    _aij_prod_deriv = np.zeros((_num_element**2,_num_react))
+    for k in xrange(_num_element**2):
+        for l in xrange(_num_react):
+            i = k/_num_element
+            j = np.mod(k,_num_element)
+            _aij_prod_deriv[k][l] = _aij_prod[i][j][l]
 
     def __init__(self, dtype="float"): 
 
@@ -371,7 +372,7 @@ class CEAFS(object):    #trigger action on Mach
 
         results_chmatrix = np.zeros((num_element+1, num_element+1), dtype=self.dtype)
 
-        
+        results_chmatrix[:num_element,:num_element] = np.dot(self._aij_prod_deriv,n_guess[:-1]).reshape((num_element,num_element))
 
 
         return results_chmatrix, results_rhs, result_muj

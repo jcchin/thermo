@@ -171,11 +171,11 @@ class Deriv_Tests(unittest.TestCase):
             error = np.abs((a_rhs.real-cs_rhs)/(cs_rhs+1e-90)) #1e-50 protects against divide by zero errors
             self.assertTrue(np.all(error < 1e-5))
 
-            print a_chmatrix
-            print 
-            print cs_chmatrix
-            print 
-            print fd_chmatrix
+            #print a_chmatrix
+            #print 
+            #print cs_chmatrix
+            #print 
+            #print fd_chmatrix
             
             error = np.abs((a_chmatrix.real-cs_chmatrix)/(cs_chmatrix+1e-90))
             self.assertTrue(np.all(error[:2,:2] < 1e-3))
@@ -192,12 +192,14 @@ class Deriv_Tests(unittest.TestCase):
 
         a_chmatrix, a_rhs, a_muj = self.cea._n2ls_applyJ(blank_n, 1,0)
 
-        error = np.abs(a_muj.real-cs_muj)
+        error = np.abs((a_muj.real-cs_muj)/(cs_muj+1e-90))
         self.assertTrue(np.all(error < 1e-5))
 
         error = np.abs((a_rhs.real-cs_rhs)/(cs_rhs+1e-90))
         self.assertTrue(np.all(error < 1e-5))
         
+        error = np.abs((a_chmatrix.real-cs_chmatrix)/(cs_chmatrix+1e-90))
+        self.assertTrue(np.all(error < 1e-5))
 
         #------- P
         self.cea.P = complex(1.034210,1e-40) #this is set on line 130
@@ -217,6 +219,8 @@ class Deriv_Tests(unittest.TestCase):
         self.assertTrue(np.all(error < 1e-5))
         #self.assertTrue(np.all(error[-1] < 1e-3))
         
+        error = np.abs((a_chmatrix.real-cs_chmatrix)/(cs_chmatrix+1e-90))
+        self.assertTrue(np.all(error < 1e-5))
 
 
 
