@@ -1,7 +1,5 @@
 import unittest
-
 import numpy as np
-
 from CEAFS import CEAFS
 
 
@@ -172,16 +170,7 @@ class Deriv_Tests(unittest.TestCase):
             self.assertTrue(np.all(error < 1e-5))
 
             error = np.abs((a_chmatrix.real-cs_chmatrix)/(cs_chmatrix+1e-90))
-            self.assertTrue(np.all(error[:2,:2] < 1e-3))
-
-            print a_chmatrix
-            print 
-            print cs_chmatrix
-            print 
-            print fd_chmatrix
-
-            quit()
-            #self.assertTrue(np.all(error[] < 1e-3))
+            self.assertTrue(np.all(error < 1e-5))
         
 
         #------- T

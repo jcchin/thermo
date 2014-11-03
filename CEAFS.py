@@ -379,6 +379,8 @@ class CEAFS(object):    #trigger action on Mach
         for i in xrange(num_element):
             results_chmatrix[-1,i] = np.sum(aij[i]*n_guess[:-1])
 
+        results_chmatrix[-1,-1] = np.sum(n_guess[:-1])-n_guess[-1]
+
         return results_chmatrix, results_rhs, result_muj
 
     def _H0_applyJ(self, vec): 
