@@ -22,7 +22,7 @@ class CEA_TestCase(unittest.TestCase):
         self.assertAlmostEqual(self.cea.gamma.real, 1.1997550763532066, 3)
         self.assertAlmostEqual(self.cea.h.real, 340.3269, 2)
         self.assertAlmostEqual(self.cea.s.real, 2.3576, 3)
-        self.assertAlmostEqual(self.cea.rho.real, 9.4447e-5, 3)
+        self.assertAlmostEqual(self.cea.rho.real, 9.4444e-5, 3)
 
     def test_1500K(self): 
 
