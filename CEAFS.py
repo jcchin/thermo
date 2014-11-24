@@ -38,25 +38,33 @@ class CEAFS(object):    #trigger action on Mach
     for i in range( 0, _num_element ):
         for j in range( 0, _num_element ):
             _aij_prod[i][j] = aij[i]*aij[j]
-            
 
-    def __init__(self): 
+    _aij_prod_deriv = np.zeros((_num_element**2,_num_react))
+    for k in xrange(_num_element**2):
+        for l in xrange(_num_react):
+            i = k/_num_element
+            j = np.mod(k,_num_element)
+            _aij_prod_deriv[k][l] = _aij_prod[i][j][l]
 
-        self._n = empty(self._num_react+1, dtype='complex')
+    def __init__(self, dtype="float"): 
 
-        self._Chem = np.zeros((self._num_element+1, self._num_element+1), dtype='complex') 
-        self._Temp = np.zeros((self._num_element+1, self._num_element+1), dtype='complex') 
-        self._Press= np.zeros((self._num_element+1, self._num_element+1), dtype='complex') 
+        self.dtype = dtype #allows me to use complex values only if needed
 
-        self._rhs = np.zeros(self._num_element + 1, dtype='complex')
+        self._n = empty(self._num_react+1, dtype=dtype)
 
-        self._results = np.zeros(self._num_element + 1, dtype='complex')
+        self._Chem = np.zeros((self._num_element+1, self._num_element+1), dtype=dtype) 
+        self._Temp = np.zeros((self._num_element+1, self._num_element+1), dtype=dtype) 
+        self._Press= np.zeros((self._num_element+1, self._num_element+1), dtype=dtype) 
 
-        self._bsubi = np.zeros(self._num_element, dtype='complex')
-        self._bsub0 = np.zeros(self._num_element, dtype='complex')
+        self._rhs = np.zeros(self._num_element + 1, dtype=dtype)
 
-        self._Chem_hP = np.zeros((self._num_element+2, self._num_element+2), dtype='complex') 
-        self._rhs_hP = np.zeros(self._num_element + 2, dtype='complex')        
+        self._results = np.zeros(self._num_element + 1, dtype=dtype)
+
+        self._bsubi = np.zeros(self._num_element, dtype=dtype)
+        self._bsub0 = np.zeros(self._num_element, dtype=dtype)
+
+        self._Chem_hP = np.zeros((self._num_element+2, self._num_element+2), dtype=dtype) 
+        self._rhs_hP = np.zeros(self._num_element + 2, dtype=dtype)        
         
         
         self.T = 0 #Kelvin
@@ -65,16 +73,19 @@ class CEAFS(object):    #trigger action on Mach
         self.s = 0 #CAL/(G)(K)
         self.rho = 0 #G/CC
     
-    def H0( self, T ):
+    def H0( self ):
         ai = self.a.T
-        return (-ai[0]/T**2 + ai[1]/T*np.log(T) + ai[2] + ai[3]*T/2 + ai[4]*T**2/3 + ai[5]*T**3/4 + ai[6]*T**4/5+ai[7]/T)
+        T = self.T
+        return (-ai[0]/T**2 + ai[1]/T*np.log(T) + ai[2] + ai[3]*T/2. + ai[4]*T**2/3. + ai[5]*T**3/4. + ai[6]*T**4/5.+ai[7]/T)
     
-    def S0( self, T ):
+    def S0( self ):
         ai = self.a.T
-        return (-ai[0]/(2*T**2) - ai[1]/T + ai[2]*np.log(T) + ai[3]*T + ai[4]*T**2/2 + ai[5]*T**3/3 + ai[6]*T**4/5+ai[8] )
+        T = self.T
+        return (-ai[0]/(2*T**2) - ai[1]/T + ai[2]*np.log(T) + ai[3]*T + ai[4]*T**2/2. + ai[5]*T**3/3. + ai[6]*T**4/5.+ai[8] )
     
-    def Cp0( self, T):
+    def Cp0( self):
         ai = self.a.T
+        T = self.T
         return ai[0]/T**2 + ai[1]/T + ai[2] + ai[3]*T + ai[4]*T**2 + ai[5]*T**3 + ai[6]*T**4 
     
     
@@ -94,7 +105,9 @@ class CEAFS(object):    #trigger action on Mach
             sum_aij_nj = np.sum(self.aij[i] * nj / self.wt_mole)
             bsub0[ i ] = sum_aij_nj    
                                
-        nj[:] = ones(num_react, dtype='complex')/num_react/10. #reset initial guess to equal concentrations
+        nj[:] = ones(num_react, dtype=self.dtype)/num_react #reset initial guess to equal concentrations
+        #nj[:] = ones(num_react, dtype=self.dtype)/num_react/10. #reset initial guess to equal concentrations
+
 
 
     def set_total_TP(self, T, P ):
@@ -144,7 +157,7 @@ class CEAFS(object):    #trigger action on Mach
         dlnVqdlnP = -1 + results[num_element]  
 
         #rhs for Cp constant T
-        H0_T = self.H0(T) #compute this once, and use it a bunch of times
+        H0_T = self.H0() #compute this once, and use it a bunch of times
 
         #determinerhs 2.56
         for i in range( 0, num_element ):
@@ -162,27 +175,21 @@ class CEAFS(object):    #trigger action on Mach
 
         dlnVqdlnT = 1 - results[num_element]
 
-        Cpf = np.sum(nj*self.Cp0(T))
+        Cpf = np.sum(nj*self.Cp0())
 
         Cpe = 0 
         for i in range( 0, num_element ):
             sum_aijnjhj = np.sum(self.aij[i]*nj*H0_T)
             Cpe -= sum_aijnjhj*results[i]
         Cpe += np.sum(nj*H0_T**2)
-        # Cpe += np.sum(nj*H0_T*results[num_element])
 
         
-        #for j in range( 0, num_react ):
-            #Cpe = Cpe + nj[j]*self.H0(T,j)*resultst
         self.h = np.sum(nj*H0_T*8314.51/4184.*T)
-        self.s = np.sum (nj*(self.S0( self.T )*8314.51/4184. -8314.51/4184.*log( nj/sum_nj)-8314.51/4184.*log( P )))
-
-        self.rho = 1/sum_nj       
+        self.s = np.sum (nj*(self.S0()*8314.51/4184. -8314.51/4184.*log( nj/sum_nj)-8314.51/4184.*log( P )))
         self.Cp = (Cpe+Cpf)*1.987
         self.Cv = self.Cp + self._n[-1]*1.987*dlnVqdlnT**2/dlnVqdlnP
         self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
-
-        self.rho = P/(sum_nj*8314.51*T )
+        self.rho = P/(sum_nj*8314.51*T ) 
 
         return nj/sum_nj
 
@@ -241,7 +248,7 @@ class CEAFS(object):    #trigger action on Mach
         dlnVqdlnP = -1 + results[num_element]  
 
         #rhs for Cp constant T
-        H0_T = self.H0(self.T) #compute this once, and use it a bunch of times
+        H0_T = self.H0() #compute this once, and use it a bunch of times
 
         #determinerhs 2.56
         for i in range( 0, num_element ):
@@ -259,7 +266,7 @@ class CEAFS(object):    #trigger action on Mach
 
         dlnVqdlnT = 1 - results[num_element]
 
-        Cpf = np.sum(nj*self.Cp0(self.T))
+        Cpf = np.sum(nj*self.Cp0())
 
         Cpe = 0 
         for i in range( 0, num_element ):
@@ -272,7 +279,7 @@ class CEAFS(object):    #trigger action on Mach
         #for j in range( 0, num_react ):
         #Cpe = Cpe + nj[j]*self.H0(T,j)*resultst
         self.h = np.sum(nj*H0_T*8314.51/4184.*self.T)
-        self.s = np.sum (nj*(self.S0( self.T )*8314.51/4184. -8314.51/4184.*log( nj/sum_nj)-8314.51/4184.*log( P)))
+        self.s = np.sum (nj*(self.S0( )*8314.51/4184. -8314.51/4184.*log( nj/sum_nj)-8314.51/4184.*log( P)))
         self.Cp = (Cpe+Cpf)*1.987
         self.Cv = self.Cp + self._n[-1]*1.987*dlnVqdlnT**2/dlnVqdlnP
         self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
@@ -280,7 +287,7 @@ class CEAFS(object):    #trigger action on Mach
 
         return nj/sum_nj
         
-    def _n2pi(self, n_guess): 
+    def _n2ls(self, n_guess): 
         """maps molar concentrations to pi coefficients matrix and a right-hand-side""" 
         num_react = self._num_react
         num_element = self._num_element
@@ -298,7 +305,8 @@ class CEAFS(object):    #trigger action on Mach
         nmoles = n_guess[-1]
         
         #calculate mu for each reactant
-        muj = self.H0(self.T) - self.S0(self.T) + np.log(nj) + np.log(self.P/nmoles) #pressure in Bars
+        muj = self.H0() - self.S0() + np.log(nj) + np.log(self.P/nmoles) #pressure in Bars
+        self._muj = muj #save for later
 
         #calculate b_i for each element
         for i in range( 0, num_element ):
@@ -313,8 +321,6 @@ class CEAFS(object):    #trigger action on Mach
                 pmatrix[i][j] = tot
                 
                 
-
-
         #determine the delta n coeff for 2.24, dln/dlnT coeff for 2.56, and dln/dlP coeff 2.64
         #and pi coef for 2.26,  dpi/dlnT for 2.58, and dpi/dlnP for 2.66
         #and rhs of 2.64
@@ -334,13 +340,72 @@ class CEAFS(object):    #trigger action on Mach
         #determine right side of matrix for eq 2.24
         for i in range( 0, num_element ):
             sum_aij_nj_muj = np.sum(self.aij[i]*nj*muj)
-            rhs[i]=bsub0[i]-bsubi[i]+sum_aij_nj_muj
+            rhs[i]=sum_aij_nj_muj + bsub0[i]-bsubi[i]
 
         #determine the right side of the matrix for eq 2.36
         sum_nj_muj = np.sum(nj*muj)
-        rhs[num_element] = nmoles - sum_nj + sum_nj_muj
+        rhs[-1] = nmoles - sum_nj + sum_nj_muj
 
         return chmatrix, rhs, muj
+    
+    def _n2ls_applyJ(self,n_guess, T, P):
+
+        num_element = self._num_element
+        num_react = self._num_react
+
+        epsilon = 1e-90 #numerical offset to handle concentrations going to zero
+        result_muj = n_guess[:-1]/(self._n[:-1]+epsilon) - n_guess[-1]/(self._n[-1]+epsilon) + self._H0_applyJ(T) - self._S0_applyJ(T) + 1/self.P*P
+
+        results_rhs = np.zeros((num_element+1), dtype=self.dtype)
+        
+        aij = self.aij
+        muj = self._muj
+        nj = self._n[:-1]
+        n_moles = self._n[-1]
+        # for i in xrange(0, num_element):
+        #     results_rhs[i]= np.sum((-aij[i]+aij[i]*(muj+1))*n_guess[i])
+
+        for i in xrange(0, num_element):
+            # results_rhs[i] = 0
+            # for j in xrange(0, num_react): 
+            #         results_rhs[i]+= (-aij[i][j] + aij[i][j]*(muj[j]+1))*n_guess[j] #contribution from nj
+            results_rhs[i] = np.sum((-aij[i] + aij[i]*(muj+1))*n_guess[:-1])
+            results_rhs[i] -= np.sum(aij[i]*nj/n_moles)*n_guess[-1] #contribution from n_moles
+            results_rhs[i] +=  np.sum(aij[i]*(self._H0_applyJ(nj)- self._S0_applyJ(nj)))*T#contribution from T
+            results_rhs[i] +=  np.sum(aij[i]*nj)/self.P*P#contribution from P
+
+        #print n_guess[-1], n_guess[:-1], self._muj
+        results_rhs[-1] = (1-np.sum(nj)/n_moles)*n_guess[-1] + np.sum(n_guess[:-1]*muj) #nj contribution
+        results_rhs[-1] += np.sum(self._H0_applyJ(nj)- self._S0_applyJ(nj))*T # T contribution
+        results_rhs[-1] += np.sum(nj/self.P)*P # P contribution
+
+        results_chmatrix = np.zeros((num_element+1, num_element+1), dtype=self.dtype)
+
+        results_chmatrix[:num_element,:num_element] = np.dot(self._aij_prod_deriv,n_guess[:-1]).reshape((num_element,num_element))
+
+        for i in xrange(num_element):
+            results_chmatrix[i,-1] = np.sum(aij[i]*n_guess[:-1])
+        for i in xrange(num_element):
+            results_chmatrix[-1,i] = np.sum(aij[i]*n_guess[:-1])
+
+        results_chmatrix[-1,-1] = np.sum(n_guess[:-1])-n_guess[-1]
+
+        return results_chmatrix, results_rhs, result_muj
+
+    def _H0_applyJ(self, vec): 
+        ai = self.a.T
+        T = self.T.real
+        return vec*(2*ai[0]/T**3 + ai[1]*(1-np.log(T))/T**2 + ai[3]/2. + 2*ai[4]/3.*T + 3*ai[5]/4.*T**2 + 4*ai[6]/5.*T**3 - ai[7]/T**2)
+
+    def _S0_applyJ(self, vec): 
+        ai = self.a.T
+        T = self.T
+        return vec* (ai[0]/(T**3) + ai[1]/T**2 + ai[2]/T + ai[3] + ai[4]*T + ai[5]*T**2 + 4*ai[6]/5.*T**3)
+    
+    def _Cp0_applyJ(self, vec): 
+        ai = self.a.T
+        T = self.T
+        return vec* (-2*ai[0]/T**3 - ai[1]/T**2 + ai[3] + 2.*ai[4]*T + 3.*ai[5]*T**2 + 4.*ai[6]*T**3)
 
     def _hpmatrix(self, n_guess, Tguess): 
        
@@ -360,7 +425,7 @@ class CEAFS(object):    #trigger action on Mach
         nmoles = n_guess[-1]
         
         #calculate mu for each reactant
-        muj = self.H0(Tguess) - self.S0(Tguess) + np.log(nj) + np.log(self.P/nmoles) #pressure in Bars
+        muj = self.H0() - self.S0() + np.log(nj) + np.log(self.P/nmoles) #pressure in Bars
 
         #calculate b_i for each element
         for i in range( 0, num_element ):
@@ -377,7 +442,7 @@ class CEAFS(object):    #trigger action on Mach
         #determine pi coefficients for equation 2.27 and dellnT coeffiecient for
         #equations 2.24, 2.25
         for i in range( 0, num_element ):
-		chmatrix[i][num_element+1]=np.sum( self.aij[i]*nj*self.H0(self.T ))
+		chmatrix[i][num_element+1]=np.sum( self.aij[i]*nj*self.H0())
 			
         for i in range( 0, num_element ):
                     chmatrix[num_element+1][i]=chmatrix[i][num_element+1]
@@ -385,11 +450,11 @@ class CEAFS(object):    #trigger action on Mach
 
 	#determine the dellnT coefficient from 2.26 and 
 	#delln coefficient from 2.27
-	chmatrix[num_element][num_element+1]=np.sum(nj*self.H0(self.T))
+	chmatrix[num_element][num_element+1]=np.sum(nj*self.H0())
 	chmatrix[num_element+1][num_element]=chmatrix[num_element][num_element+1]
 	
 	#determine the dellnT coefficient from 2.27
-        chmatrix[num_element+1][num_element+1]=np.sum( nj*self.Cp0(self.T) + nj*self.H0(self.T)*self.H0(self.T) )        
+        chmatrix[num_element+1][num_element+1]=np.sum( nj*self.Cp0() + nj*self.H0()**2 )        
 
         #determine the delta n coeff for 2.24, dln/dlnT coeff for 2.56, and dln/dlP coeff 2.64
         #and pi coef for 2.26,  dpi/dlnT for 2.58, and dpi/dlnP for 2.66
@@ -422,14 +487,14 @@ class CEAFS(object):    #trigger action on Mach
         rhs[num_element] = nmoles - sum_nj + sum_nj_muj
         
         #determine the right side of the matrix for eq 2.27
-        rhs[num_element+1] = self.h/(8314.51/4184.*Tguess)-np.sum(nj*self.H0(Tguess))+ np.sum( self.H0( Tguess )*nj* muj)
+        rhs[num_element+1] = self.h/(8314.51/4184.*Tguess)-np.sum(nj*self.H0())+ np.sum( self.H0()*nj* muj)
 
         return chmatrix, rhs, muj
 
     def _pi2n(self, pi_update, muj): 
         """maps pi updates back to concentration updates""" 
         num_react = self._num_react
-        n = np.empty((num_react+1, ), dtype="complex")
+        n = np.empty((num_react+1, ), dtype=self.dtype)
 
         #update total moles eq 3.4
         n[-1] = pi_update[-1]
@@ -444,10 +509,10 @@ class CEAFS(object):    #trigger action on Mach
         
     def _resid_TP(self, n_guess): 
 
-        chmatrix, rhs, muj = self._n2pi(n_guess)
+        chmatrix, rhs, muj = self._n2ls(n_guess)
+        self._muj = muj #saved for later use by other functions
         pi_update = linalg.solve( chmatrix, rhs )
         n = self._pi2n(pi_update, muj)
-
         return n
 
     def _resid_hP(self, n_guess, T_guess): 
@@ -458,12 +523,12 @@ class CEAFS(object):    #trigger action on Mach
         #answer =  [-18.1889,-15.9502,-0.636677,-0.0869830] 
         dellnT = answer[ self._num_element+1 ]
     
-        n = np.empty((self._num_react+1, ), dtype="complex")
+        n = np.empty((self._num_react+1, ), dtype=self.dtype)
 
         #update total moles eq 3.4
         n[-1] = answer[-2]
  
-        h = self.H0(T_guess)
+        h = self.H0()
 
         #update each reactant moles eq 3.4 and 2.18
         for j in xrange( 0, self._num_react ):
@@ -494,16 +559,6 @@ class CEAFS(object):    #trigger action on Mach
 
         return result
 
-    def _n2pi_applyJ(self,n_guess):
-        
-        num_element = self._num_element
-        num_react = self._num_react
-
-        result = np.empty((num_element+1,))
-
-        intermed = n_guess[-1]/self._n[-1]
-        for i in xrange(num_react):
-            result[i] = n_guess[i]/self._n[i] - itermed
 
 
 if __name__ == "__main__": 
