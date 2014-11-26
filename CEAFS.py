@@ -207,7 +207,6 @@ class CEAFS(object):    #trigger action on Mach
         print "dlnVqdlnP", dlnVqdlnP
         print "gamma", self.gamma
         print
-        exit()
 
         return nj/sum_nj
 

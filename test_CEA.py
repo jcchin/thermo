@@ -185,7 +185,7 @@ class Deriv_Tests(unittest.TestCase):
         for i in xrange(base_n.shape[0]): 
             
             delta = base_n.copy()
-            step = 1e-15
+            step = 1e-40
             delta[i] += complex(0,step) #derivative starts to explode for ln(small values), so need a really small step to get accuracy
             new_chmatrix, new_rhs, new_muj = self.cea._n2ls(delta)
             cs_muj = new_muj.imag/step
@@ -211,8 +211,7 @@ class Deriv_Tests(unittest.TestCase):
             error = np.abs((a_muj.real-cs_muj)/(cs_muj+1e-50))
             self.assertTrue(np.all(error < 1e-5))
 
-            #using relative error here
-            error = np.abs((a_rhs.real-cs_rhs)/(cs_rhs+1e-90)) #1e-50 protects against divide by zero errors
+            error = np.abs((a_rhs.real-cs_rhs))
             self.assertTrue(np.all(error < 1e-5))
 
             error = np.abs((a_chmatrix.real-cs_chmatrix)/(cs_chmatrix+1e-90))
@@ -230,10 +229,10 @@ class Deriv_Tests(unittest.TestCase):
 
         a_chmatrix, a_rhs, a_muj = self.cea._n2ls_applyJ(blank_n, 1,0)
 
-        error = np.abs((a_muj.real-cs_muj)/(cs_muj+1e-90))
+        error = np.abs(a_muj.real-cs_muj)
         self.assertTrue(np.all(error < 1e-5))
 
-        error = np.abs((a_rhs.real-cs_rhs)/(cs_rhs+1e-90))
+        error = np.abs(a_rhs.real-cs_rhs)
         self.assertTrue(np.all(error < 1e-5))
         
         error = np.abs((a_chmatrix.real-cs_chmatrix)/(cs_chmatrix+1e-90))
