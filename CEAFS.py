@@ -109,7 +109,6 @@ class CEAFS(object):    #trigger action on Mach
         #nj[:] = ones(num_react, dtype=self.dtype)/num_react/10. #reset initial guess to equal concentrations
 
 
-
     def set_total_TP(self, T, P ):
 
         nj = self._n[:-1]
@@ -154,6 +153,12 @@ class CEAFS(object):    #trigger action on Mach
         self._Press[num_element, num_element] = 0
         results = linalg.solve( self._Press, rhs )
 
+        print "T,P", self.T, self.P
+        print "P rhs", rhs
+        print "P ch", self._Press
+        print "P result", repr(results)
+        print "%2.15f" % results[num_element]  
+
         dlnVqdlnP = -1 + results[num_element]  
 
         #rhs for Cp constant T
@@ -171,6 +176,10 @@ class CEAFS(object):    #trigger action on Mach
 
         self._Temp[num_element, num_element] = 0
         results = linalg.solve( self._Temp, rhs )
+
+        print "T rhs", rhs
+        print "T ch", self._Temp
+        print "T result", repr(results)
 
 
         dlnVqdlnT = 1 - results[num_element]
@@ -191,7 +200,17 @@ class CEAFS(object):    #trigger action on Mach
         self.gamma = -1*( self.Cp / self.Cv )/dlnVqdlnP
         self.rho = P/(sum_nj*8314.51*T ) 
 
+        print "Cp", self.Cp
+        print "Cv", self.Cv
+        print "dlnVqdlnP", dlnVqdlnP
+        print "gamma", self.gamma
+        print
+        exit()
+
         return nj/sum_nj
+
+
+
 
     def set_total_hP(self, h, P ):
 
